@@ -1,7 +1,7 @@
 {
   "name": "noutieren",
-  "version": "1.1.0",
-  "description": "Noutieren — a private, local-first Firefox sidebar extension for formatted notes organized into color-labeled tabs.",
+  "version": "1.2.0",
+  "description": "Noutieren \u2014 a private, local-first Firefox sidebar extension for formatted notes organized into color-labeled tabs.",
   "private": true,
   "type": "module",
   "license": "MIT",

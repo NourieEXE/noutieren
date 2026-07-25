@@ -63,6 +63,7 @@ describe('sanitizePreferences', () => {
       notesPanelCollapsed: true,
       theme: 'dark',
       searchAllTabs: true,
+      lastExportedAt: 1750000000000,
     });
     expect(result).toEqual({
       selectedTabId: 'tab-1',
@@ -70,6 +71,7 @@ describe('sanitizePreferences', () => {
       notesPanelCollapsed: true,
       theme: 'dark',
       searchAllTabs: true,
+      lastExportedAt: 1750000000000,
     });
   });
 
@@ -85,11 +87,14 @@ describe('sanitizePreferences', () => {
     expect(result.selectedNoteId).toBeNull();
     // Only a real boolean counts as collapsed.
     expect(result.notesPanelCollapsed).toBe(false);
+    expect(sanitizePreferences({ lastExportedAt: 'yesterday' }).lastExportedAt).toBeNull();
+    expect(sanitizePreferences({ lastExportedAt: -1 }).lastExportedAt).toBeNull();
   });
 
   it('drops unknown keys instead of storing them', () => {
     const result = sanitizePreferences({ theme: 'light', somethingElse: 'dropped' });
     expect(Object.keys(result).sort()).toEqual([
+      'lastExportedAt',
       'notesPanelCollapsed',
       'searchAllTabs',
       'selectedNoteId',

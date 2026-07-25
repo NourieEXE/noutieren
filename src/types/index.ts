@@ -49,6 +49,8 @@ export interface AppPreferences {
   theme: ThemePreference;
   /** Whether search covers every tab or only the selected one. */
   searchAllTabs: boolean;
+  /** When a backup was last exported, for the staleness reminder. */
+  lastExportedAt: number | null;
 }
 
 export type SaveState = 'idle' | 'saving' | 'saved' | 'error';

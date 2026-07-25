@@ -3,7 +3,6 @@ import { useWorkspace } from '../hooks/workspaceContext';
 import { useToasts } from '../hooks/toastContext';
 import {
   backupFilename,
-  createBackup,
   importWithSafetyBackup,
   parseBackup,
   resetAllData,
@@ -16,6 +15,8 @@ import { MAX_IMPORT_BYTES, downloadTextFile, readTextFile } from '../utils/downl
 import type { ImportMode, ThemePreference } from '../types';
 import { ConfirmDialog, Dialog } from './Dialog';
 import { Menu, MenuItem, MenuSeparator } from './Menu';
+import { useExportBackup } from '../hooks/useExportBackup';
+import { describeLastExport } from '../services/storageDurability';
 import { Icon } from './Icons';
 
 const THEME_OPTIONS: readonly { value: ThemePreference; label: string }[] = [
@@ -33,27 +34,13 @@ const THEME_OPTIONS: readonly { value: ThemePreference; label: string }[] = [
  */
 export function SettingsMenu() {
   const { preferences, updatePreferences, actions, flushSaves } = useWorkspace();
+  const handleExport = useExportBackup();
   const toasts = useToasts();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [pendingImport, setPendingImport] = useState<ParsedBackup | null>(null);
   const [resetOpen, setResetOpen] = useState(false);
   const [busy, setBusy] = useState(false);
-
-  const handleExport = async () => {
-    try {
-      await flushSaves();
-      const backup = await createBackup(preferences);
-      downloadTextFile(backupFilename(), serializeBackup(backup));
-      toasts.push({
-        tone: 'success',
-        message: `Exported ${backup.tabs.length} tabs and ${backup.notes.length} notes.`,
-      });
-    } catch (error) {
-      logError('export', error);
-      toasts.push({ tone: 'error', message: `Export failed. ${describeError(error)}` });
-    }
-  };
 
   const handleFileChosen = async (file: File) => {
     try {
@@ -149,7 +136,7 @@ export function SettingsMenu() {
               </MenuItem>
             ))}
 
-            <MenuSeparator label="Backup" />
+            <MenuSeparator label={describeLastExport(preferences.lastExportedAt)} />
             <MenuItem
               onSelect={() => {
                 close();

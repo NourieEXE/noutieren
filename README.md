@@ -18,6 +18,8 @@ It lives in the sidebar, and opens in a full browser tab when you want more room
 | **Built with** | React · TypeScript · Vite · Tiptap/ProseMirror · Dexie/IndexedDB    |
 | **Tests**      | 188, plus typecheck, lint, a build audit and `web-ext lint`         |
 | **License**    | MIT                                                                 |
+| **Privacy**    | No data collected — see [PRIVACY.md](PRIVACY.md)                    |
+| **Building**   | Reproducible build steps in [BUILDING.md](BUILDING.md)              |
 
 ### Quick start
 

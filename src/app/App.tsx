@@ -2,6 +2,8 @@ import { useId, useRef, useState } from 'react';
 import { useWorkspace } from '../hooks/workspaceContext';
 import { useTheme } from '../hooks/useTheme';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
+import { useExportBackup } from '../hooks/useExportBackup';
+import { useExportReminder } from '../hooks/useExportReminder';
 import { detectViewMode, openFullPageEditor } from '../services/webext';
 import { TabStrip } from '../components/TabStrip';
 import { NotesPanel } from '../components/NotesPanel';
@@ -28,6 +30,9 @@ export function App() {
   const collapsed = preferences.notesPanelCollapsed;
 
   useTheme(preferences.theme);
+
+  const exportBackup = useExportBackup();
+  useExportReminder(() => void exportBackup());
 
   useKeyboardShortcuts({
     onNewNote: () => void actions.createNote(),

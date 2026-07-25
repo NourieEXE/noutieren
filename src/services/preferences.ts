@@ -1,5 +1,6 @@
 import type { AppPreferences, ThemePreference } from '../types';
 import { isValidId } from '../utils/id';
+import { isValidTimestamp } from '../utils/time';
 import { getBrowserApi } from './webext';
 import { logError } from './errors';
 
@@ -19,6 +20,7 @@ export const DEFAULT_PREFERENCES: AppPreferences = {
   notesPanelCollapsed: false,
   theme: 'system',
   searchAllTabs: false,
+  lastExportedAt: null,
 };
 
 const THEMES: readonly ThemePreference[] = ['system', 'light', 'dark'];
@@ -35,6 +37,7 @@ export function sanitizePreferences(value: unknown): AppPreferences {
     notesPanelCollapsed: source.notesPanelCollapsed === true,
     theme: THEMES.includes(theme as ThemePreference) ? (theme as ThemePreference) : 'system',
     searchAllTabs: source.searchAllTabs === true,
+    lastExportedAt: isValidTimestamp(source.lastExportedAt) ? source.lastExportedAt : null,
   };
 }
 
