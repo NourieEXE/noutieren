@@ -1,11 +1,41 @@
 # Noutieren
 
-A private, local-first Firefox extension for taking formatted notes organized into
-color-labeled tabs. It lives in the Firefox sidebar, and opens in a full browser tab when
-you want more room.
+**Private, local-first notes in the Firefox sidebar, organized into color-labeled tabs.**
 
-Everything stays on your device. There is no account, no sync, no telemetry, and the
-extension makes no network requests of any kind.
+Rich text, instant local search, and JSON backups — with no account, no sync, no telemetry,
+and no network requests of any kind. Two permissions: `storage` and `unlimitedStorage`.
+
+It lives in the sidebar, and opens in a full browser tab when you want more room.
+
+<!-- A screenshot of the sidebar in use belongs here:
+     ![Noutieren in the Firefox sidebar](docs/screenshot.png) -->
+
+|                |                                                                     |
+| -------------- | ------------------------------------------------------------------- |
+| **Status**     | Working, signed, in daily use. Not published to addons.mozilla.org. |
+| **Requires**   | Firefox 142+ (desktop)                                              |
+| **Built with** | React · TypeScript · Vite · Tiptap/ProseMirror · Dexie/IndexedDB    |
+| **Tests**      | 188, plus typecheck, lint, a build audit and `web-ext lint`         |
+| **License**    | MIT                                                                 |
+
+### Quick start
+
+```bash
+npm install
+npm run build        # unpacked extension in dist/
+npm run firefox      # or: load dist/manifest.json via about:debugging
+```
+
+Full install options, including permanent installation, are under
+[Installing permanently](#installing-permanently-signing).
+
+### Contents
+
+- [Features](#features) · [Privacy](#privacy) · [Requirements](#requirements)
+- [Install](#install-dependencies) · [Development](#run-in-development) · [Build](#build) · [Package](#package-with-web-ext)
+- [Installing permanently](#installing-permanently-signing) · [Keyboard shortcuts](#keyboard-shortcuts)
+- [Data storage](#data-storage) · [Renaming and identifiers](#renaming-and-identifiers) · [Re-signing](#making-changes-and-re-signing)
+- [Export and import](#export-and-import) · [Project structure](#project-structure) · [Testing](#testing-and-checks) · [Known limitations](#known-limitations)
 
 ## Features
 
