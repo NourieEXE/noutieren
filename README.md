@@ -10,7 +10,6 @@ It lives in the sidebar, and opens in a full browser tab when you want more room
 <!-- A screenshot of the sidebar in use belongs here:
      ![Noutieren in the Firefox sidebar](docs/screenshot.png) -->
 
-|                |                                                                     |
 | -------------- | ------------------------------------------------------------------- |
 | **Status**     | Working, signed, in daily use. Not published to addons.mozilla.org. |
 | **Requires**   | Firefox 142+ (desktop)                                              |
