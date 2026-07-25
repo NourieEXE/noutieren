@@ -16,7 +16,7 @@ It lives in the sidebar, and opens in a full browser tab when you want more room
 | **Status**     | Working, signed, in daily use. Not published to addons.mozilla.org. |
 | **Requires**   | Firefox 142+ (desktop)                                              |
 | **Built with** | React · TypeScript · Vite · Tiptap/ProseMirror · Dexie/IndexedDB    |
-| **Tests**      | 188, plus typecheck, lint, a build audit and `web-ext lint`         |
+| **Tests**      | 203, plus typecheck, lint, a build audit and `web-ext lint`         |
 | **License**    | MIT                                                                 |
 | **Privacy**    | No data collected — see [PRIVACY.md](PRIVACY.md)                    |
 | **Building**   | Reproducible build steps in [BUILDING.md](BUILDING.md)              |
@@ -139,7 +139,7 @@ npm run build
 ```
 
 Produces the complete unpacked extension in **`dist/`**, with `dist/manifest.json` at its
-root. The build runs three steps: generating the PNG icons, bundling the UI, bundling the
+root. The build runs four steps: generating the PNG icons, bundling the UI, bundling the
 background script, and then auditing the output (`scripts/verify-build.mjs`) for missing
 files, source maps, remote references and dynamic code.
 
@@ -149,7 +149,7 @@ files, source maps, remote references and dynamic code.
 npm run package
 ```
 
-Creates **`web-ext-artifacts/noutieren-1.1.0.zip`** (about 236 KB). Source maps are
+Creates **`web-ext-artifacts/noutieren-1.2.0.zip`** (about 237 KB). Source maps are
 excluded and no development files are included.
 
 ## Installing permanently (signing)
