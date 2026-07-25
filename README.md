@@ -7,8 +7,9 @@ and no network requests of any kind. Two permissions: `storage` and `unlimitedSt
 
 It lives in the sidebar, and opens in a full browser tab when you want more room.
 
-<!-- A screenshot of the sidebar in use belongs here:
-     ![Noutieren in the Firefox sidebar](docs/screenshot.png) -->
+<p align="center">
+  <img src="docs/noutieren.png" alt="Noutieren open in the Firefox sidebar: a tab strip with two color-labeled tabs, a notes list, and the rich-text editor below it" width="360">
+</p>
 
 | -------------- | ------------------------------------------------------------------- |
 | **Status**     | Working, signed, in daily use. Not published to addons.mozilla.org. |
@@ -54,6 +55,15 @@ Full install options, including permanent installation, are under
   merging; reset to a clean slate.
 - **Light, dark and system themes**, keyboard navigation throughout, and a layout that works
   from a 320 px sidebar to a full window.
+
+## Screenshots
+
+| Tab settings                                                                                                                                                                                                                                            | Note actions                                                                                                                                                             |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| <img src="docs/tab_settings.png" alt="Tab settings dialog: name field, a twelve-swatch color palette with the selected one check-marked, a custom color input, move left and right buttons, the tab's note count, and a Delete tab button" width="330"> | <img src="docs/note_settings.png" alt="Note actions menu: duplicate note, move up and move down greyed out for a single note, move to tab, and delete note" width="330"> |
+
+Selection is never signalled by color alone — the chosen swatch carries a check mark and the
+value is printed as text. Controls that cannot act are disabled rather than hidden.
 
 ## Privacy
 
