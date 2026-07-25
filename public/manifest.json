@@ -1,0 +1,51 @@
+{
+  "manifest_version": 3,
+  "name": "Noutieren",
+  "version": "1.1.0",
+  "description": "Private, local-first notes organized into color-labeled tabs. Rich text, instant search, no accounts, no network access.",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "colornote-tabs@local.extension",
+      "strict_min_version": "142.0",
+      "data_collection_permissions": {
+        "required": ["none"]
+      }
+    }
+  },
+  "permissions": ["storage", "unlimitedStorage"],
+  "action": {
+    "default_title": "Open Noutieren sidebar",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png",
+      "96": "icons/icon-96.png",
+      "128": "icons/icon-128.png"
+    }
+  },
+  "sidebar_action": {
+    "default_title": "Noutieren",
+    "default_panel": "index.html?view=sidebar",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png",
+      "96": "icons/icon-96.png",
+      "128": "icons/icon-128.png"
+    },
+    "open_at_install": false
+  },
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "96": "icons/icon-96.png",
+    "128": "icons/icon-128.png"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; base-uri 'none'; form-action 'none'"
+  }
+}

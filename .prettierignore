@@ -1,0 +1,6 @@
+dist
+web-ext-artifacts
+node_modules
+coverage
+public/icons
+package-lock.json

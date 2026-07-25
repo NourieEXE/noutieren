@@ -1,0 +1,10 @@
+node_modules/
+dist/
+web-ext-artifacts/
+coverage/
+
+# Toolbar icons are generated from scripts/generate-icons.mjs by `npm run build`.
+public/icons/*.png
+
+*.log
+.DS_Store
