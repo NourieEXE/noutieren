@@ -11,6 +11,7 @@ It lives in the sidebar, and opens in a full browser tab when you want more room
   <img src="docs/noutieren.png" alt="Noutieren open in the Firefox sidebar: a tab strip with two color-labeled tabs, a notes list, and the rich-text editor below it" width="360">
 </p>
 
+| At a glance    |                                                                     |
 | -------------- | ------------------------------------------------------------------- |
 | **Status**     | Working, signed, in daily use. Not published to addons.mozilla.org. |
 | **Requires**   | Firefox 142+ (desktop)                                              |
