@@ -20,6 +20,7 @@ It lives in the sidebar, and opens in a full browser tab when you want more room
 | **License**    | MIT                                                                 |
 | **Privacy**    | No data collected — see [PRIVACY.md](PRIVACY.md)                    |
 | **Building**   | Reproducible build steps in [BUILDING.md](BUILDING.md)              |
+| **Changes**    | [CHANGELOG.md](CHANGELOG.md)                                        |
 
 ### Quick start
 
