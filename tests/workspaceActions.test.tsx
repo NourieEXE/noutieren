@@ -186,9 +186,13 @@ describe('tab actions', () => {
     });
 
     // Selected tab: its own colour as background with a contrasting foreground.
-    const tabButton = screen.getByRole('tab', { name: /Colour me/ });
-    expect(tabButton.style.background).toBe('rgb(245, 158, 11)');
-    expect(tabButton.style.color).toBe('rgb(15, 23, 42)');
+    // Waited for separately from the row above: storing the colour and painting
+    // it are two steps, with the live query and a re-render in between.
+    await waitFor(() => {
+      const tabButton = screen.getByRole('tab', { name: /Colour me/ });
+      expect(tabButton.style.background).toBe('rgb(245, 158, 11)');
+      expect(tabButton.style.color).toBe('rgb(15, 23, 42)');
+    });
   });
 
   it('reorders tabs from the settings dialog', async () => {

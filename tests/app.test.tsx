@@ -57,8 +57,13 @@ describe('first run', () => {
 
     const rows = within(notesList()).getAllByRole('listitem');
     expect(rows).toHaveLength(1);
-    expect(within(rows[0]).getByRole('button')).toHaveAttribute('aria-current', 'true');
 
+    // The seeded note is selected by an effect that runs after the live query
+    // delivers it, a tick later than the list itself — so this has to be waited
+    // for rather than read straight after render.
+    await waitFor(() =>
+      expect(within(rows[0]).getByRole('button')).toHaveAttribute('aria-current', 'true'),
+    );
     expect(screen.getByRole('textbox', { name: 'Note title' })).toHaveValue('New note');
   });
 
