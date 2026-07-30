@@ -26,6 +26,7 @@ import {
   resolveSelectedTabId,
 } from '../services/workspaceService';
 import { saveQueue } from '../services/saveQueue';
+import { getTeardownHandoff } from '../services/teardown';
 import { savePreferences } from '../services/preferences';
 import { describeError, logError } from '../services/errors';
 
@@ -216,17 +217,36 @@ export function WorkspaceProvider({
   }, []);
 
   useEffect(() => {
+    // A soft signal: the document survives being hidden, so writing in place is
+    // both correct and cheap.
     const flush = () => {
       void saveQueue.flush();
     };
+
+    // The last code that may ever run in this document. Where a handoff is
+    // installed — a Chrome toolbar popup, which is torn down the instant it
+    // loses focus — the queue is given away instead of written here, because a
+    // transaction opened now would die with the connection. Taking the snapshot
+    // empties the queue, so `pagehide` followed by `beforeunload` hands off once
+    // and the second call finds nothing.
+    const teardown = () => {
+      const handoff = getTeardownHandoff();
+      if (!handoff) {
+        void saveQueue.flush();
+        return;
+      }
+      const writes = saveQueue.takePendingSnapshot();
+      if (writes.length > 0) handoff(writes);
+    };
+
     document.addEventListener('visibilitychange', flush);
-    window.addEventListener('pagehide', flush);
-    window.addEventListener('beforeunload', flush);
+    window.addEventListener('pagehide', teardown);
+    window.addEventListener('beforeunload', teardown);
     return () => {
       document.removeEventListener('visibilitychange', flush);
-      window.removeEventListener('pagehide', flush);
-      window.removeEventListener('beforeunload', flush);
-      // Unmount: write anything still queued.
+      window.removeEventListener('pagehide', teardown);
+      window.removeEventListener('beforeunload', teardown);
+      // Unmount: the document is still alive here, so write in place.
       void saveQueue.flush();
     };
   }, []);

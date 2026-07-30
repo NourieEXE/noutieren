@@ -4,7 +4,9 @@ web-ext-artifacts/
 coverage/
 
 # Toolbar icons are generated from scripts/generate-icons.mjs by `npm run build`.
+# Both targets get a copy; neither is checked in.
 public/icons/*.png
+chrome_version/public/icons/*.png
 
 *.log
 .DS_Store

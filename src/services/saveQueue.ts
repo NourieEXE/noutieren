@@ -1,5 +1,6 @@
 import type { NotePatch, SaveState } from '../types';
 import { applyNotePatch } from '../database/notesRepository';
+import type { PendingWrite } from './teardown';
 import { describeError, logError } from './errors';
 
 /**
@@ -16,6 +17,8 @@ import { describeError, logError } from './errors';
  *   note switch, blur, tab hide, unload, unmount and Ctrl/Cmd+S.
  * - A failed write puts the patch back in the queue instead of dropping it, and
  *   surfaces an error state.
+ * - On a surface that can be destroyed mid-write, `takePendingSnapshot()` hands
+ *   the queue to something that outlives the document rather than racing it.
  * - Each note carries a base version (its `updatedAt` when this session read
  *   it). If another view wrote in the meantime the save is refused as a
  *   conflict rather than silently overwriting.
@@ -103,6 +106,36 @@ export class SaveQueue {
   /** The queued-but-unwritten patch for a note. Exposed for tests. */
   peekPending(noteId: string): NotePatch | undefined {
     return this.pending.get(noteId)?.patch;
+  }
+
+  /**
+   * Removes every queued-but-unwritten patch and returns it, cancelling the
+   * debounce timers.
+   *
+   * For surfaces that are destroyed without warning, where beginning an async
+   * write would be pointless: the document — and with it the IndexedDB
+   * connection the transaction belongs to — is about to disappear. The caller
+   * takes ownership of persisting what it receives; see `services/teardown`.
+   *
+   * Writes already in flight are deliberately left behind. They have started,
+   * they may well still land, and handing out a second copy would race the one
+   * that is running. Since a patch sits in `pending` for at most one debounce
+   * window, what this returns is everything typed in the last ~400 ms — exactly
+   * the part that has had no chance to reach storage yet.
+   */
+  takePendingSnapshot(): PendingWrite[] {
+    const writes: PendingWrite[] = [];
+    for (const [noteId, entry] of this.pending) {
+      if (entry.timer) clearTimeout(entry.timer);
+      writes.push({
+        noteId,
+        patch: entry.patch,
+        expectedUpdatedAt: this.baseVersions.get(noteId) ?? null,
+      });
+    }
+    this.pending.clear();
+    this.emit();
+    return writes;
   }
 
   /**

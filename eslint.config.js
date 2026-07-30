@@ -7,7 +7,15 @@ import prettier from 'eslint-config-prettier';
 
 export default tseslint.config(
   {
-    ignores: ['dist', 'web-ext-artifacts', 'public/icons', 'coverage', 'node_modules'],
+    ignores: [
+      'dist',
+      'chrome_version/dist',
+      'web-ext-artifacts',
+      'public/icons',
+      'chrome_version/public/icons',
+      'coverage',
+      'node_modules',
+    ],
   },
   js.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
@@ -20,7 +28,8 @@ export default tseslint.config(
     },
   },
   {
-    files: ['src/**/*.{ts,tsx}'],
+    // The Chrome delta is application code too, and is held to the same rules.
+    files: ['src/**/*.{ts,tsx}', 'chrome_version/src/**/*.{ts,tsx}'],
     languageOptions: {
       globals: globals.browser,
     },
@@ -69,11 +78,11 @@ export default tseslint.config(
   // two separate entries because `disableTypeChecked` carries its own
   // `languageOptions` and would otherwise replace the globals set alongside it.
   {
-    files: ['*.config.{js,ts}', 'scripts/**/*.mjs'],
+    files: ['**/*.config.{js,ts}', 'scripts/**/*.mjs'],
     ...tseslint.configs.disableTypeChecked,
   },
   {
-    files: ['*.config.{js,ts}', 'scripts/**/*.mjs'],
+    files: ['**/*.config.{js,ts}', 'scripts/**/*.mjs'],
     languageOptions: {
       globals: { ...globals.node, ...globals.nodeBuiltin },
     },

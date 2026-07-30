@@ -1,24 +1,11 @@
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
-import '../styles/global.css';
-import { ErrorBoundary } from './ErrorBoundary';
-import { ToastProvider } from '../components/ToastProvider';
-import { AppBootstrap } from './AppBootstrap';
-import { detectViewMode } from '../services/webext';
+import { mount } from './mount';
 
-// Exposed for CSS that needs to know the surface (the layout itself is
-// width-driven, not surface-driven).
-document.documentElement.dataset.view = detectViewMode();
-
-const container = document.getElementById('root');
-if (!container) throw new Error('Missing #root element.');
-
-createRoot(container).render(
-  <StrictMode>
-    <ErrorBoundary>
-      <ToastProvider>
-        <AppBootstrap />
-      </ToastProvider>
-    </ErrorBoundary>
-  </StrictMode>,
-);
+/**
+ * Firefox entry point, loaded by `index.html` for both the sidebar and the
+ * full-page tab.
+ *
+ * Nothing to install first: a Firefox sidebar survives long enough after
+ * `pagehide` to finish its own autosave, so the default in-page flush is
+ * correct here. Chrome's entry point is `chrome_version/src/entry.tsx`.
+ */
+mount();

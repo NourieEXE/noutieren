@@ -12,7 +12,14 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const OUT_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'public', 'icons');
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+
+/**
+ * Both targets get the same artwork. Each build only copies its own `public/`
+ * directory, so the icons are written twice rather than shared — they are a few
+ * kilobytes, and the alternative is a copy step in two Vite configs.
+ */
+const OUT_DIRS = [join(ROOT, 'public', 'icons'), join(ROOT, 'chrome_version', 'public', 'icons')];
 const SIZES = [16, 32, 48, 96, 128];
 const GRID = 128; // design-grid units
 const SS = 4; // supersampling factor
@@ -176,9 +183,11 @@ function encodePng(rgba, size) {
   ]);
 }
 
-mkdirSync(OUT_DIR, { recursive: true });
 for (const size of SIZES) {
-  const file = join(OUT_DIR, `icon-${size}.png`);
-  writeFileSync(file, encodePng(renderIcon(size), size));
-  console.log(`icon  ${String(size).padStart(3)}px  ->  public/icons/icon-${size}.png`);
+  const png = encodePng(renderIcon(size), size);
+  for (const dir of OUT_DIRS) {
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, `icon-${size}.png`), png);
+  }
+  console.log(`icon  ${String(size).padStart(3)}px  ->  ${OUT_DIRS.length} targets`);
 }

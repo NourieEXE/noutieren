@@ -1,0 +1,17 @@
+<!doctype html>
+<!--
+  `data-view` is set here rather than left to `mount()`, so the 800×600 rule in
+  the stylesheet applies at first paint. Chrome sizes a popup from its content:
+  waiting for JavaScript would show a collapsed window that then jumps to size.
+  `mount()` sets the same value again from the filename.
+-->
+<html lang="en" data-view="popup">
+  <head>
+    <meta charset="utf-8" />
+    <title>Noutieren</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="./src/entry.tsx"></script>
+  </body>
+</html>

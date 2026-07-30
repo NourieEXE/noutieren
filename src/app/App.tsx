@@ -65,7 +65,7 @@ export function App() {
 
         <h1 className="app__title">Noutieren</h1>
 
-        {viewMode === 'sidebar' ? (
+        {viewMode !== 'page' ? (
           <button
             type="button"
             className="button button--compact"

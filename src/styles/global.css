@@ -129,6 +129,21 @@ body {
   min-width: 0;
 }
 
+/*
+ * Chrome's toolbar popup has no viewport of its own to fill: the browser
+ * measures the document and sizes the window to match, capped at 800×600. So
+ * `height: 100%` resolves against nothing and the popup collapses — this view is
+ * the one place that needs explicit pixels.
+ *
+ * 800 px also clears the 700 px container query below, which is what puts the
+ * notes list and the editor side by side. Firefox never renders this view.
+ */
+:root[data-view='popup'],
+:root[data-view='popup'] body {
+  width: 800px;
+  height: 600px;
+}
+
 :focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 2px;

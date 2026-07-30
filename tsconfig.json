@@ -27,5 +27,14 @@
     "skipLibCheck": true,
     "noEmit": true
   },
-  "include": ["src", "tests", "vite.config.ts", "vite.background.config.ts", "vitest.config.ts"]
+  "include": [
+    "src",
+    "tests",
+    "chrome_version/src",
+    "vite.config.ts",
+    "vite.background.config.ts",
+    "vitest.config.ts",
+    "chrome_version/vite.config.ts",
+    "chrome_version/vite.serviceworker.config.ts"
+  ]
 }

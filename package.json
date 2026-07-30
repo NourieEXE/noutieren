@@ -15,6 +15,12 @@
     "build": "npm run build:app && npm run build:background && node scripts/verify-build.mjs",
     "build:app": "vite build",
     "build:background": "vite build --config vite.background.config.ts",
+    "dev:chrome": "vite --config chrome_version/vite.config.ts",
+    "build:chrome": "npm run icons && npm run build:chrome:app && npm run build:chrome:sw && node scripts/verify-build.mjs --target=chrome",
+    "build:chrome:app": "vite build --config chrome_version/vite.config.ts",
+    "build:chrome:sw": "vite build --config chrome_version/vite.serviceworker.config.ts",
+    "package:chrome": "npm run build:chrome && node scripts/package-chrome.mjs",
+    "verify:chrome": "npm run build:chrome && node scripts/verify-chrome.mjs",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . && prettier --check .",
     "lint:fix": "eslint . --fix && prettier --write .",
@@ -24,7 +30,7 @@
     "webext:lint": "web-ext lint --source-dir dist --self-hosted",
     "firefox": "npm run build && web-ext run --source-dir dist",
     "package": "npm run build && web-ext build --source-dir dist --overwrite-dest --ignore-files \"**/*.map\"",
-    "check": "npm run typecheck && npm run lint && npm run test:run && npm run build && npm run webext:lint"
+    "check": "npm run typecheck && npm run lint && npm run test:run && npm run build && npm run webext:lint && npm run build:chrome"
   },
   "dependencies": {
     "@tiptap/core": "^3.29.0",
