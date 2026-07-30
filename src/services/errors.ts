@@ -49,6 +49,14 @@ export function describeError(error: unknown): string {
   return 'Something went wrong. Your data was not changed.';
 }
 
+/**
+ * Notes a condition worth knowing about that is not a failure — a browser
+ * declining something optional, rather than something going wrong.
+ */
+export function logWarning(context: string, message: string): void {
+  console.warn(`[noutieren] ${context}: ${message}`);
+}
+
 /** Logs technical detail without leaking it into the interface. */
 export function logError(context: string, error: unknown): void {
   if (import.meta.env.DEV) {

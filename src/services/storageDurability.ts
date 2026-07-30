@@ -32,7 +32,14 @@ export async function ensurePersistentStorage(): Promise<PersistenceState> {
 
   try {
     if (await storage.persisted()) return 'persisted';
-    // Extensions holding `unlimitedStorage` are granted this without a prompt.
+    // Firefox grants this to an extension without prompting. Chrome refuses it
+    // outright for extension origins, even holding `unlimitedStorage` — measured
+    // on Chromium 150, where `persist()` returns false and `persisted()` stays
+    // false while the quota is lifted to ~32 GB. There the permission governs
+    // eviction instead, and this call is simply not wired to it.
+    //
+    // A refusal is therefore a browser policy, not a fault; callers should not
+    // report it as an error.
     return (await storage.persist()) ? 'persisted' : 'denied';
   } catch (error) {
     logError('ensurePersistentStorage', error);
