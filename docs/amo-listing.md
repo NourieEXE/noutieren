@@ -1,7 +1,9 @@
 # addons.mozilla.org listing copy
 
-Draft text for the listed submission. Everything here is paste-ready; edit the voice to suit
-you before submitting — it will be read as yours, not mine.
+> **Submitted and approved.** Live at
+> <https://addons.mozilla.org/en-US/firefox/addon/noutieren-notes/> as _Noutieren (Notes)_,
+> version 1.2.0. This file is kept as the source for the listing text — edit it here, then
+> paste into the Developer Hub, so the wording stays reviewable alongside the code.
 
 ---
 
@@ -67,11 +69,11 @@ clearly wrong, and there is no dedicated Notes category.)
 
 ## Support
 
-| Field | Value |
-| --- | --- |
-| Support site | `https://github.com/NourieEXE/noutieren` |
+| Field         | Value                                                            |
+| ------------- | ---------------------------------------------------------------- |
+| Support site  | `https://github.com/NourieEXE/noutieren`                         |
 | Support email | Optional. Leave blank to route everything through GitHub issues. |
-| Homepage | `https://github.com/NourieEXE/noutieren` |
+| Homepage      | `https://github.com/NourieEXE/noutieren`                         |
 
 ## Privacy policy
 

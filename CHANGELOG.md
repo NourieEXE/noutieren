@@ -3,10 +3,50 @@
 All notable changes to Noutieren. Dates are the build date; versions follow
 [semantic versioning](https://semver.org/).
 
+## Unreleased
+
+### Added
+
+- **A Chrome build**, in [`chrome_version/`](chrome_version/README.md). The toolbar button
+  opens an 800×600 popup — Chrome has no sidebar API — and the full-page tab works as it does
+  on Firefox. Verified in Chromium 150.
+- **`npm run verify:chrome`**, which loads the built extension into a headless Chromium under
+  a throwaway profile and drives it over the DevTools protocol: that Chrome accepts the
+  manifest and the strict CSP, that the popup renders at the size it declares, and that text
+  typed a moment before the popup is destroyed survives. Eighteen checks.
+- **Teardown handoff for autosave.** Chrome destroys a popup's document the moment it loses
+  focus, taking any open IndexedDB transaction with it, so a write started there is
+  unreliable. The Chrome build now hands pending patches to its service worker, which outlives
+  the popup. Firefox is unchanged and still flushes in place; the seam is an injected function
+  rather than a build flag, so both paths are covered by tests.
+
+### Changed
+
+- `chrome_version/` holds only what Chrome needs differently — a manifest, two HTML entries, a
+  service worker and two Vite configs. There is no second copy of the application: it builds
+  from the same `src/`, and `npm run check` builds both targets so shared changes cannot break
+  Chrome silently.
+- `getBrowserApi()` falls back to Chrome's `chrome` namespace, testing `runtime.id` to avoid
+  mistaking the unrelated `chrome` object on ordinary web pages for the extension API.
+- `scripts/verify-build.mjs` takes `--target=firefox|chrome` and applies each browser's
+  manifest expectations. The self-containment audit is identical for both.
+
+### Fixed
+
+- **A refused request for persistent storage is no longer reported as an error.** Chrome
+  declines `navigator.storage.persist()` for extension origins even with `unlimitedStorage`
+  (measured on Chromium 150: `persist()` returns false while the quota is lifted to ~32 GB),
+  so every launch would have logged an error claiming data "may be evicted" — misleading about
+  the permission that actually protects it. It is now a single `console.warn`, and the wrong
+  comment asserting extensions are granted this without a prompt has been corrected. Firefox
+  behaviour is unchanged: it still grants persistence.
+
 ## 1.2.0 — 2026-07-25
 
 Prepared for a listed addons.mozilla.org submission, where people arrive without having read
-any documentation.
+any documentation. **Since approved and published** as
+[Noutieren (Notes)](https://addons.mozilla.org/en-US/firefox/addon/noutieren-notes/) — this is
+the version on the store.
 
 ### Added
 
