@@ -31,7 +31,8 @@
     "firefox": "npm run build && web-ext run --source-dir dist",
     "package": "npm run build && web-ext build --source-dir dist --overwrite-dest --ignore-files \"**/*.map\"",
     "check": "npm run typecheck && npm run lint && npm run test:run && npm run build && npm run webext:lint && npm run build:chrome",
-    "images:chrome": "npm run build:chrome && node scripts/capture-store-images.mjs"
+    "images:chrome": "npm run build:chrome && node scripts/capture-store-images.mjs",
+    "icon:store": "node scripts/generate-store-icon.mjs"
   },
   "dependencies": {
     "@tiptap/core": "^3.29.0",

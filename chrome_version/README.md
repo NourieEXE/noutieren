@@ -195,6 +195,23 @@ Also note the Web Store charges a one-time developer registration fee, and revie
 take longer than addons.mozilla.org. As on AMO, the bundle is minified, so expect
 to point reviewers at [`../BUILDING.md`](../BUILDING.md).
 
+## Store icon
+
+```bash
+npm run icon:store
+```
+
+Writes `docs/store/store-icon-128.png` — the size both the Chrome Web Store and
+addons.mozilla.org ask for, so one file serves both — plus a 512px copy for README
+and press use.
+
+It is the same bars, same geometry, same rasterizer as the packaged icons, on a
+dark rounded tile. The packaged toolbar icons stay transparent on purpose: they sit
+on browser chrome that may be light or dark, where a filled tile would look like a
+sticker. A store icon has the opposite problem — it stands alone on a page, and
+transparency leaves it unanchored — and the dark field also keeps the bars legible
+at the 32px used in listings and search results.
+
 ## Store screenshots
 
 ```bash
