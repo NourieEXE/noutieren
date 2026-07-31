@@ -194,3 +194,21 @@ and is worth doing before a first upload rather than after.
 Also note the Web Store charges a one-time developer registration fee, and reviews
 take longer than addons.mozilla.org. As on AMO, the bundle is minified, so expect
 to point reviewers at [`../BUILDING.md`](../BUILDING.md).
+
+## Store screenshots
+
+```bash
+npm run images:chrome
+```
+
+Writes four 1280×800 images to `docs/store/`. The store demands exactly that size
+while a Chrome popup is only 800×600, so the popup is photographed at its true
+size and composited into a mock browser window, anchored under a lit toolbar icon
+— which is what clicking the button actually looks like. Chromium does the
+compositing itself, at 1:1, so no interface pixel is ever resampled and nothing in
+the frame is a mock-up of the app.
+
+The demo workspace is seeded straight into IndexedDB by the script, so the content
+is the same every run: three colour-labeled tabs, notes using headings, checklists,
+bullets and a quote. Shots 1–3 are light (the popup, the colour palette, the note
+menu); shot 4 is the full-page view in dark, to show the theme exists.
