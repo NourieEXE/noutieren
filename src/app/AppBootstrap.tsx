@@ -34,9 +34,11 @@ export function AppBootstrap() {
         void ensurePersistentStorage().then((state) => {
           // Chrome always answers `denied` for extension origins, so this is a
           // normal condition there rather than a fault — `unlimitedStorage`
-          // governs eviction instead. It is worth one console line, not an
-          // error on every launch. The `error` state has already been logged
-          // with its cause by the service itself.
+          // governs eviction instead. Logged at `debug` (see `logWarning`) so
+          // it does not land in Chrome's extension "Errors" panel, which
+          // collects `console.warn` and would show this on every launch, in
+          // every context, as though something had gone wrong. The `error`
+          // state has already been logged with its cause by the service itself.
           if (state === 'denied' || state === 'unsupported') {
             logWarning(
               'storage durability',

@@ -3,7 +3,9 @@
 **Private, local-first notes in the Firefox sidebar, organized into color-labeled tabs.**
 
 Rich text, instant local search, and JSON backups — with no account, no sync, no telemetry,
-and no network requests of any kind. Two permissions: `storage` and `unlimitedStorage`.
+and no network requests of any kind. Two permissions at install: `storage` and
+`unlimitedStorage`, plus one optional permission you are only ever asked for if you use
+[Pin to URL](#pin-to-url).
 
 It lives in the sidebar, and opens in a full browser tab when you want more room.
 
@@ -14,23 +16,24 @@ It lives in the sidebar, and opens in a full browser tab when you want more room
 <p align="center">
   <a href="https://addons.mozilla.org/en-US/firefox/addon/noutieren-notes/"><strong>Install for Firefox →</strong></a>
   &nbsp;·&nbsp;
-  <a href="chrome_version/README.md">Chrome build</a>
+  <a href="https://chromewebstore.google.com/detail/noutieren/fehabengonhjmgghempjpcgfkggppknf"><strong>Install for Chrome →</strong></a>
+  &nbsp;·&nbsp;
+  <a href="chrome_version/README.md">Chrome build notes</a>
 </p>
 
 <p align="center"><sub>Everything below is for building it yourself. To just use it, the link above is all you need.</sub></p>
 
-| At a glance    |                                                                                       |
-| -------------- | ------------------------------------------------------------------------------------- |
-| **Install**    | [addons.mozilla.org](https://addons.mozilla.org/en-US/firefox/addon/noutieren-notes/) |
-| **Status**     | Published and approved on AMO; in daily use                                           |
-| **Requires**   | Firefox 142+ (desktop)                                                                |
-| **Built with** | React · TypeScript · Vite · Tiptap/ProseMirror · Dexie/IndexedDB                      |
-| **Tests**      | 232, plus typecheck, lint, a build audit and `web-ext lint`                           |
-| **License**    | MIT                                                                                   |
-| **Privacy**    | No data collected — see [PRIVACY.md](PRIVACY.md)                                      |
-| **Building**   | Reproducible build steps in [BUILDING.md](BUILDING.md)                                |
-| **Changes**    | [CHANGELOG.md](CHANGELOG.md)                                                          |
-| **Chrome**     | Popup build, verified in Chromium 150 — [chrome_version/](chrome_version/README.md)   |
+| At a glance    |                                                                                                                                                                                                 |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Install**    | [addons.mozilla.org](https://addons.mozilla.org/en-US/firefox/addon/noutieren-notes/) · [Chrome Web Store](https://chromewebstore.google.com/detail/noutieren/fehabengonhjmgghempjpcgfkggppknf) |
+| **Status**     | Published on AMO and the Chrome Web Store; in daily use                                                                                                                                         |
+| **Requires**   | Firefox 142+ (desktop), or Chrome 111+                                                                                                                                                          |
+| **Built with** | React · TypeScript · Vite · Tiptap/ProseMirror · Dexie/IndexedDB                                                                                                                                |
+| **Tests**      | 315, plus typecheck, lint, a build audit and `web-ext lint`                                                                                                                                     |
+| **License**    | MIT                                                                                                                                                                                             |
+| **Privacy**    | No data collected — see [PRIVACY.md](PRIVACY.md)                                                                                                                                                |
+| **Building**   | Reproducible build steps in [BUILDING.md](BUILDING.md)                                                                                                                                          |
+| **Chrome**     | Popup build — [store listing](https://chromewebstore.google.com/detail/noutieren/fehabengonhjmgghempjpcgfkggppknf), notes in [chrome_version/](chrome_version/README.md)                        |
 
 ### Quick start
 
@@ -49,7 +52,7 @@ Other install routes, including signing your own build for permanent installatio
 
 ### Contents
 
-- [Features](#features) · [Privacy](#privacy) · [Requirements](#requirements)
+- [Features](#features) · [Pin to URL](#pin-to-url) · [Privacy](#privacy) · [Requirements](#requirements)
 - [Install](#install-dependencies) · [Development](#run-in-development) · [Build](#build) · [Package](#package-with-web-ext)
 - [Installing permanently](#installing-permanently-signing) · [Keyboard shortcuts](#keyboard-shortcuts)
 - [Data storage](#data-storage) · [Renaming and identifiers](#renaming-and-identifiers) · [Re-signing](#making-changes-and-re-signing)
@@ -69,6 +72,9 @@ Other install routes, including signing your own build for permanent installatio
   unavailable, and keep your text selection.
 - **Autosave.** Debounced ~400 ms, flushed immediately on note switch, blur, tab hide,
   window unload and Ctrl/Cmd+S, with a `Saving…` / `Saved` indicator.
+- **[Pin to URL](#pin-to-url).** A tab or a single note can be set to appear only while a
+  particular page is open, using standard match patterns such as `https://*.youtube.com/*`.
+  On both Firefox and Chrome.
 - **Local search** over note titles and text, in the current tab or across all tabs.
 - **Backup.** Export everything to one readable JSON file; import it back by replacing or
   merging; reset to a clean slate.
@@ -84,12 +90,85 @@ Other install routes, including signing your own build for permanent installatio
 Selection is never signalled by color alone — the chosen swatch carries a check mark and the
 value is printed as text. Controls that cannot act are disabled rather than hidden.
 
+## Pin to URL
+
+A tab, or one individual note, can be pinned so that it only appears while a matching page is
+open. Set it in **Tab settings → Pin to URL**, or **Note actions → Pin to URL…**.
+
+Patterns use the standard
+[WebExtension match-pattern](https://developer.mozilla.org/docs/Mozilla/Add-ons/WebExtensions/Match_patterns)
+syntax, `<scheme>://<host><path>`:
+
+| Pattern                                       | Matches                                     |
+| --------------------------------------------- | ------------------------------------------- |
+| `https://www.youtube.com/watch?v=eDQtUwad5vg` | that one video, and nothing else            |
+| `https://www.youtube.com/`                    | the YouTube home page only                  |
+| `https://*.youtube.com/*`                     | all of YouTube, including `music.` and `m.` |
+| `https://example.com/docs/*`                  | anything under `/docs/`                     |
+| `*://example.com/*`                           | either scheme                               |
+| `youtube.com`                                 | shorthand — read as `*://youtube.com/`      |
+
+**Nothing is ever widened for you.** What you type is what is stored:
+`https://www.youtube.com/` pins the home page and only the home page. To cover a whole site,
+either type the `*` yourself or tick **Also match everything under this address**, which shows
+you the exact pattern it will save before you add it. The field always prints the final
+string, so a pin can never come back broader than the one you entered.
+
+Details worth knowing:
+
+- A trailing `/` means the root path **only**; `/*` means everything on the host. This is the
+  difference between pinning to a site's home page and pinning to the whole site.
+- `*.example.com` matches `example.com` itself as well as its subdomains, and cannot be
+  satisfied by a lookalike such as `notexample.com`.
+- The query string is matched; the `#fragment` never is.
+- Only `http` and `https` can be pinned, so a pin never matches `about:`, `file:` or the
+  extension's own pages.
+- Only two things are filled in, because only one reading is possible: a missing scheme
+  (`example.com` → `*://example.com/`) and a missing path (`https://example.com` →
+  `https://example.com/`, as a browser would read the same text).
+- Multiple patterns act as "or" — the item shows if any one of them matches.
+
+Pins **hide, they never delete**. Whenever a pin is hiding something, a pin button appears in
+the tab strip showing how many items are affected; one click reveals all of them. Pins also do
+not apply in the full-page view, which is itself a browser tab, so that is always a way back to
+everything.
+
+### The optional permission
+
+Matching against the current page means knowing its address, which needs the `tabs`
+permission. It is **optional and off by default**:
+
+- Not requested at install or on update — no existing install is disabled pending approval.
+- Saving a pin never prompts. Pins are data: they store fine and sit inert until the permission
+  is held, so nothing you type is thrown away and nothing is asked for before you have shown
+  you want the feature.
+- Once a pin exists, the editor says it is not active yet and offers **Enable Pin to URL**.
+  That button is the only thing that ever raises the prompt.
+- Clearing a pin never needs it.
+- Revoke it any time — **Add-ons → Noutieren → Permissions** on Firefox, **Details → Site
+  settings** on Chrome. Pins become inert, everything becomes visible, no notes are lost.
+
+Pins **fail open, never closed**: without the permission, or when the address is unknown,
+everything is shown. Failing the other way would be indistinguishable from losing notes.
+
+The address is compared in memory and never stored, exported or transmitted. Noutieren still
+cannot read the _contents_ of any page. See [PRIVACY.md](PRIVACY.md) for the full statement,
+and [docs/permissions.md](docs/permissions.md) for the store-listing wording.
+
+**On Chrome the prompt appears in the full-page view.** Chrome destroys the toolbar popup the
+moment it loses focus, which is exactly what a permission dialog does — the popup would be gone
+before you could answer, so the request cannot merely fail there, it cannot be asked. **Enable
+Pin to URL** therefore opens the full page and asks there. Grant it, close the tab, and pins
+work in the popup from then on. Firefox's sidebar stays open, so it prompts in place.
+
 ## Privacy
 
 - No network requests. No analytics, telemetry, ads, accounts, or cloud sync.
-- No content scripts, no host permissions, no page-reading permissions. The extension cannot
-  see any web page you visit.
-- Only two permissions are requested: `storage` and `unlimitedStorage`.
+- No content scripts and no host permissions. The extension cannot see the contents of any web
+  page you visit.
+- Two permissions are requested at install: `storage` and `unlimitedStorage`. One further
+  permission, `tabs`, is optional and requested at runtime only if you use
+  [Pin to URL](#pin-to-url).
 - All code and dependencies are bundled locally. The build is verified to contain no remote
   scripts, styles, fonts or `eval`-style dynamic code.
 - Your notes live in this Firefox profile's IndexedDB. Deleting the extension's data or the
@@ -164,7 +243,7 @@ files, source maps, remote references and dynamic code.
 npm run package
 ```
 
-Creates **`web-ext-artifacts/noutieren-1.2.0.zip`** (about 237 KB). Source maps are
+Creates **`web-ext-artifacts/noutieren-1.3.0.zip`** (about 237 KB). Source maps are
 excluded and no development files are included.
 
 ## Installing permanently (signing)
@@ -217,8 +296,12 @@ may open a browser window instead of a note. The **New note** button always work
   documents — so listing, previewing and searching never deserialise a single editor
   document. Indexes exist for notes by tab, notes by tab and position, notes by updated time,
   and tabs by position.
+- **URL pins** are stored as an optional `urlPatterns` array on the tab or note row itself.
+  It is unindexed — visibility is decided in memory over the tab list and the open tab's
+  notes, never by a range query — and absent rather than empty when an item is unpinned, so
+  every row written before 1.3.0 is already a correct unpinned row.
 - **`browser.storage.local`** holds only small UI preferences: selected tab and note,
-  collapsed panel, theme and search scope.
+  collapsed panel, theme, search scope, and whether the "show hidden" pin override is on.
 - `unlimitedStorage` is requested so notes are not capped by the default extension quota.
 - The schema is versioned (`SCHEMA_VERSION` in `src/database/db.ts`) with Dexie migrations, so
   future changes upgrade existing data instead of discarding it. To add one, append a new
@@ -294,10 +377,12 @@ src/
   components/            Tab strip, notes panel, editor pane, dialogs, menus, toasts
   database/              Dexie schema and migrations, tab and note repositories
   editor/                Tiptap setup, toolbar, plain-text extraction, import sanitizer
-  hooks/                 Contexts, autosave status, theme, shortcuts, list windowing
-  services/              Autosave queue, preferences, backup, workspace, errors, WebExt API
+  hooks/                 Contexts, autosave status, theme, shortcuts, list windowing, active URL
+  services/              Autosave queue, preferences, backup, workspace, errors, WebExt API,
+                         active-tab URL + optional permission, URL-pin visibility rules
   styles/                One stylesheet, custom properties, light/dark, container queries
   types/                 Shared types and the `browser`/`chrome` namespace declarations
+  utils/                 Colors, ids, time, download, link URLs, URL match patterns
 chrome_version/          The Chrome delta only — see chrome_version/README.md
 tests/                   Vitest suites (fake-indexeddb + React Testing Library)
 ```

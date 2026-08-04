@@ -11,6 +11,7 @@ import {
   normalizeColor,
 } from '../utils/colors';
 import { createId, isValidId } from '../utils/id';
+import { sanitizePatternList } from '../utils/matchPattern';
 import { isValidTimestamp, isoDateStamp } from '../utils/time';
 import { BACKUP_FORMAT_VERSION } from '../types';
 import type {
@@ -169,6 +170,13 @@ export function parseBackup(text: string): ParsedBackup {
       repairs.push(`Tab "${normalizeText(record.title, 'Untitled')}" had an invalid color.`);
     }
 
+    const tabPins = sanitizePatternList(record.urlPatterns);
+    if (Array.isArray(record.urlPatterns) && tabPins.length < record.urlPatterns.length) {
+      repairs.push(
+        `Tab "${normalizeText(record.title, 'Untitled')}" had URL pins that could not be read, which were dropped.`,
+      );
+    }
+
     tabDrafts.push({
       id,
       originalId,
@@ -177,6 +185,7 @@ export function parseBackup(text: string): ParsedBackup {
       position: normalizePositionValue(record.position, index),
       createdAt: isValidTimestamp(record.createdAt) ? record.createdAt : now,
       updatedAt: isValidTimestamp(record.updatedAt) ? record.updatedAt : now,
+      ...(tabPins.length > 0 ? { urlPatterns: tabPins } : {}),
     });
   });
 
@@ -259,11 +268,19 @@ export function parseBackup(text: string): ParsedBackup {
       repairs.push(`Note "${normalizeText(record.title, 'Untitled')}" had an invalid color.`);
     }
 
+    const notePins = sanitizePatternList(record.urlPatterns);
+    if (Array.isArray(record.urlPatterns) && notePins.length < record.urlPatterns.length) {
+      repairs.push(
+        `Note "${normalizeText(record.title, 'Untitled')}" had URL pins that could not be read, which were dropped.`,
+      );
+    }
+
     notes.push({
       id,
       tabId,
       title: normalizeText(record.title, 'Untitled note'),
       color: normalizeColor(record.color, DEFAULT_NOTE_COLOR),
+      ...(notePins.length > 0 ? { urlPatterns: notePins } : {}),
       // Regenerated from the sanitized document — never trusted from the file,
       // so search can't be poisoned with text the note does not contain.
       plainText: extractPlainText(content),

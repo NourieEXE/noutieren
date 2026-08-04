@@ -40,20 +40,40 @@ export function extensionUrl(path: string): string {
 export const FULL_PAGE_URL = 'index.html?view=page';
 
 /**
+ * Marks a full-page tab opened to grant the `tabs` permission.
+ *
+ * Chrome's toolbar popup cannot raise a permission dialog — see
+ * `canPromptForPermission` — so it sends the user here. Without this flag the
+ * tab would open on the ordinary editor with nothing to explain why, which is
+ * exactly what it looked like the first time round.
+ */
+export const GRANT_PINS_PARAM = 'grant';
+export const GRANT_PINS_VALUE = 'pins';
+
+/** Whether this document was opened to ask for the pin permission. */
+export function wantsPinPermissionGrant(search: string = window.location.search): boolean {
+  return new URLSearchParams(search).get(GRANT_PINS_PARAM) === GRANT_PINS_VALUE;
+}
+
+/**
  * Opens the full-page editor in a normal browser tab.
  *
  * Always creates a tab rather than looking for an existing one: filtering
- * `tabs.query` by URL needs the `tabs` permission, which this extension does
- * not request, and without it the filter can be ignored — which would mean
+ * `tabs.query` by URL needs the `tabs` permission, which is optional and
+ * usually absent, and without it the filter can be ignored — which would mean
  * activating an unrelated tab. `tabs.create` needs no permission at all.
  */
-export async function openFullPageEditor(): Promise<void> {
+export async function openFullPageEditor({ forPinGrant = false } = {}): Promise<void> {
+  const path = forPinGrant
+    ? `${FULL_PAGE_URL}&${GRANT_PINS_PARAM}=${GRANT_PINS_VALUE}`
+    : FULL_PAGE_URL;
+
   const api = getBrowserApi();
   if (!api) {
-    window.open(FULL_PAGE_URL, '_blank', 'noopener');
+    window.open(path, '_blank', 'noopener');
     return;
   }
-  await api.tabs.create({ url: api.runtime.getURL(FULL_PAGE_URL) });
+  await api.tabs.create({ url: api.runtime.getURL(path) });
 }
 
 /**

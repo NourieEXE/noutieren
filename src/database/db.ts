@@ -24,7 +24,7 @@ export const DATABASE_NAME = 'colornote-tabs';
  * handler; never edit an existing version block, or installed databases will
  * fail to open. Recorded in the `meta` table and in every backup file.
  */
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 export interface MetaRow {
   key: string;
@@ -70,6 +70,20 @@ export class NoutierenDatabase extends Dexie {
           await notes.put(rest);
         }
       });
+
+    // v3 — tabs and notes may carry `urlPatterns` ("Pin to URL").
+    //
+    // No `.upgrade()` and no index. The field is optional, and a row without it
+    // is exactly what an unpinned item looks like, so every existing row is
+    // already correct and rewriting them would be pure churn. It is left
+    // unindexed because visibility is decided in memory over the tab list and
+    // the open tab's notes, never by a range query.
+    this.version(3).stores({
+      tabs: 'id, position, updatedAt',
+      notes: 'id, tabId, [tabId+position], position, updatedAt',
+      contents: 'noteId',
+      meta: 'key',
+    });
   }
 }
 

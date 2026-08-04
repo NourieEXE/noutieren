@@ -15,12 +15,29 @@ import { TabSettingsDialog } from './TabSettingsDialog';
  * The strip scrolls horizontally when tabs overflow; the page never does.
  */
 export function TabStrip({ notesPanelId }: { notesPanelId: string | undefined }) {
-  const { tabs, noteCounts, selectedTabId, selectTab, actions } = useWorkspace();
+  const {
+    tabs,
+    allTabs,
+    noteCounts,
+    selectedTabId,
+    selectTab,
+    actions,
+    pinStatus,
+    setShowHiddenPins,
+  } = useWorkspace();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
 
+  const hiddenCount = pinStatus.hiddenTabCount + pinStatus.hiddenNoteCount;
+
   const selectedIndex = tabs.findIndex((tab) => tab.id === selectedTabId);
   const selectedTab = selectedIndex >= 0 ? tabs[selectedIndex] : undefined;
+
+  // Reordering acts on the stored order, which includes tabs a pin is hiding,
+  // so the move affordance has to be read from the full list. Taking it from
+  // the visible one would disable "Move left" on a tab that can move, and
+  // enable it on a tab that cannot.
+  const orderIndex = allTabs.findIndex((tab) => tab.id === selectedTabId);
 
   const focusTabAt = (index: number) => {
     const clamped = Math.min(Math.max(index, 0), tabs.length - 1);
@@ -66,6 +83,7 @@ export function TabStrip({ notesPanelId }: { notesPanelId: string | undefined })
         {tabs.map((tab, index) => {
           const selected = tab.id === selectedTabId;
           const count = noteCounts[tab.id] ?? 0;
+          const pinned = (tab.urlPatterns?.length ?? 0) > 0;
           const style = selected
             ? { background: tab.color, color: readableTextColor(tab.color), borderColor: tab.color }
             : { background: withAlpha(tab.color, 0.12), borderColor: withAlpha(tab.color, 0.45) };
@@ -94,11 +112,17 @@ export function TabStrip({ notesPanelId }: { notesPanelId: string | undefined })
                 aria-hidden="true"
               />
               <span className="tab__title">{tab.title}</span>
+              {pinned ? (
+                <span className="tab__pin" aria-hidden="true" title="Pinned to a URL">
+                  <Icon name="pin" size={12} />
+                </span>
+              ) : null}
               <span className="tab__count" aria-hidden="true">
                 {count}
               </span>
               <span className="visually-hidden">
                 {count} {count === 1 ? 'note' : 'notes'}
+                {pinned ? ', pinned to a URL' : ''}
               </span>
             </button>
           );
@@ -106,6 +130,34 @@ export function TabStrip({ notesPanelId }: { notesPanelId: string | undefined })
       </div>
 
       <div className="tabstrip__controls">
+        {/*
+          The escape hatch for "Pin to URL".
+
+          Whenever a pin is hiding something, this says so and offers to reveal
+          it. Without it a forgotten pin is indistinguishable from lost notes,
+          which is the one impression a notes app must never give.
+        */}
+        {hiddenCount > 0 || pinStatus.showHidden ? (
+          <button
+            type="button"
+            className={`icon-button${pinStatus.showHidden ? ' icon-button--active' : ''}`}
+            aria-pressed={pinStatus.showHidden}
+            onClick={() => setShowHiddenPins(!pinStatus.showHidden)}
+            aria-label={
+              pinStatus.showHidden
+                ? 'Apply URL pins again'
+                : `Show ${hiddenCount} item${hiddenCount === 1 ? '' : 's'} hidden by a URL pin`
+            }
+            title={
+              pinStatus.showHidden
+                ? 'Showing everything — click to apply URL pins again'
+                : `${hiddenCount} hidden by a URL pin — click to show`
+            }
+          >
+            <Icon name={pinStatus.showHidden ? 'pinOff' : 'pin'} />
+          </button>
+        ) : null}
+
         <button
           type="button"
           className="icon-button"
@@ -131,14 +183,18 @@ export function TabStrip({ notesPanelId }: { notesPanelId: string | undefined })
         <TabSettingsDialog
           tab={selectedTab}
           noteCount={noteCounts[selectedTab.id] ?? 0}
-          canMoveLeft={selectedIndex > 0}
-          canMoveRight={selectedIndex < tabs.length - 1}
+          canMoveLeft={orderIndex > 0}
+          canMoveRight={orderIndex >= 0 && orderIndex < allTabs.length - 1}
           open={settingsOpen}
           onClose={() => setSettingsOpen(false)}
           onRename={(title) => void actions.renameTab(selectedTab.id, title)}
           onRecolor={(color) => void actions.recolorTab(selectedTab.id, color)}
           onMove={(delta) => void actions.moveTab(selectedTab.id, delta)}
           onDelete={() => void actions.deleteTab(selectedTab.id)}
+          onPin={(patterns) => actions.pinTab(selectedTab.id, patterns)}
+          onRequestPermission={actions.requestPinPermission}
+          activeUrl={pinStatus.activeUrl}
+          pinPermissionGranted={pinStatus.granted}
         />
       ) : null}
     </div>

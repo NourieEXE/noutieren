@@ -113,13 +113,34 @@ if (manifest) {
   if (/unsafe-eval|unsafe-inline/.test(csp))
     fail('extension_pages CSP must not allow unsafe-eval or unsafe-inline.');
 
+  /*
+   * Permissions.
+   *
+   * The required list is the one users are shown at install time, and it stays
+   * at exactly two. `tabs` — which "Pin to URL" needs to read the address of
+   * the active tab — is *optional*: it is requested at runtime, from a click,
+   * only when someone saves their first pin. Keeping it out of the required
+   * list is what means no existing install is disabled pending approval on
+   * update, and that anyone who never uses pins is never asked for anything.
+   *
+   * Moving `tabs` into `permissions` should fail this check, not pass it.
+   */
   const permissions = manifest.permissions ?? [];
   const allowed = new Set(['storage', 'unlimitedStorage']);
   for (const permission of permissions) {
-    if (!allowed.has(permission)) fail(`unexpected permission requested: ${permission}`);
+    if (!allowed.has(permission)) fail(`unexpected required permission: ${permission}`);
   }
   if (!permissions.includes('unlimitedStorage')) fail('manifest should request unlimitedStorage.');
+
+  const optional = manifest.optional_permissions ?? [];
+  const allowedOptional = new Set(['tabs']);
+  for (const permission of optional) {
+    if (!allowedOptional.has(permission)) fail(`unexpected optional permission: ${permission}`);
+  }
+
   if (manifest.host_permissions?.length) fail('manifest must not request host permissions.');
+  if (manifest.optional_host_permissions?.length)
+    fail('manifest must not request optional host permissions.');
   if (manifest.content_scripts?.length) fail('manifest must not register content scripts.');
 
   // Every referenced file must exist.

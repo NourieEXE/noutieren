@@ -3,6 +3,11 @@ dist/
 web-ext-artifacts/
 coverage/
 
+# Built release artifacts, staged for upload to AMO and the Chrome Web Store.
+# Deliberately local-only: these are build outputs, and the signed copies that
+# come back from the stores have no business in the repository either.
+releases/
+
 # Toolbar icons are generated from scripts/generate-icons.mjs by `npm run build`.
 # Both targets get a copy; neither is checked in.
 public/icons/*.png

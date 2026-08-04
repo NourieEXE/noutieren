@@ -4,3 +4,7 @@ node_modules
 coverage
 public/icons
 package-lock.json
+
+# Staged release artifacts. Build output, and gitignored — but neither Prettier
+# nor ESLint reads .gitignore, so both need telling separately.
+releases

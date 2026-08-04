@@ -64,6 +64,7 @@ describe('sanitizePreferences', () => {
       theme: 'dark',
       searchAllTabs: true,
       lastExportedAt: 1750000000000,
+      showHiddenPins: true,
     });
     expect(result).toEqual({
       selectedTabId: 'tab-1',
@@ -72,7 +73,13 @@ describe('sanitizePreferences', () => {
       theme: 'dark',
       searchAllTabs: true,
       lastExportedAt: 1750000000000,
+      showHiddenPins: true,
     });
+  });
+
+  it('treats the pin override as a real boolean', () => {
+    expect(sanitizePreferences({ showHiddenPins: 'yes' }).showHiddenPins).toBe(false);
+    expect(sanitizePreferences({}).showHiddenPins).toBe(false);
   });
 
   it('rejects an unknown theme and malformed ids', () => {
@@ -99,6 +106,7 @@ describe('sanitizePreferences', () => {
       'searchAllTabs',
       'selectedNoteId',
       'selectedTabId',
+      'showHiddenPins',
       'theme',
     ]);
   });

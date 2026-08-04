@@ -3,6 +3,11 @@
 The Chrome build of [Noutieren](../README.md). Firefox is the primary target; this
 directory holds only what Chrome needs differently.
 
+**Published:
+[Noutieren on the Chrome Web Store](https://chromewebstore.google.com/detail/noutieren/fehabengonhjmgghempjpcgfkggppknf).**
+Everything below is for building it yourself; to just use it, that link is all you
+need.
+
 > **Verified in Chromium 150.** Loaded as an unpacked extension and driven over the
 > DevTools protocol: the manifest and CSP are accepted, the popup renders at the
 > size it declares, and text typed a moment before the popup is destroyed is still
@@ -114,17 +119,27 @@ by `npm run verify:chrome`.
 
 ## Chrome refuses persistent storage; `unlimitedStorage` covers it
 
-Version 1.2.0 asks for eviction-exempt storage at startup via
+Noutieren asks for eviction-exempt storage at startup via
 `navigator.storage.persist()`. Firefox grants that to an extension without
 prompting. **Chrome refuses it outright** for extension origins, even holding
 `unlimitedStorage` — measured on Chromium 150, where `persist()` returns `false`
 and `persisted()` stays `false` while the quota is lifted to about 32 GB.
 
 So on Chrome the permission governs eviction and this call is simply not wired to
-it. The app treats the refusal as the browser policy it is: one `console.warn` line
-at startup, not an error. It used to log an error, which on Chrome would have
-appeared on every single launch and claimed your data "may be evicted" — misleading
-about the thing that actually protects it.
+it. The app treats the refusal as the browser policy it is: one line at startup,
+not an error. It used to log an error, which on Chrome would have appeared on every
+single launch and claimed your data "may be evicted" — misleading about the thing
+that actually protects it.
+
+That line is logged at **`console.debug`**, and the level matters more than it
+looks. `chrome://extensions` collects every `console.warn` _and_ `console.error`
+into a panel headed **Errors**. At `warn` level this message appeared there on
+every launch, once per context — so opening the full page from the popup produced a
+second copy, and the pair looked exactly like the button having failed. `debug` is
+not collected, and the message is still visible in DevTools under Verbose.
+
+`verify:chrome` asserts that nothing is logged at `warn` level, so this cannot
+quietly come back.
 
 Backups still matter, for the reason they always did: a browser profile is one
 disk, in one place.
@@ -142,8 +157,8 @@ npm run verify:chrome
 ```
 
 That builds the extension, loads it into a headless Chromium under a throwaway
-profile, and drives it over the DevTools protocol. Eighteen checks, all passing on
-Chromium 150:
+profile, and drives it over the DevTools protocol. Twenty-eight checks, all passing
+on Chromium 151:
 
 - The **manifest and CSP are accepted** and the service worker registers. This was
   the biggest open question — Chrome is stricter than Firefox about
@@ -161,6 +176,19 @@ Chromium 150:
   throwing.
 - The **full-page view** renders, is not forced to popup dimensions, and shows the
   same note the popup edits.
+- **Pin to URL is wired correctly and stays inert until it is allowed.** `tabs` is
+  declared optional and not required, the required list is still exactly
+  `storage` and `unlimitedStorage`, a fresh profile does not hold the permission,
+  and `chrome.tabs.query` hands back no URL while it is absent. A tab pinned to a
+  site that is not open — written straight into IndexedDB, so the app has to read
+  a pin it did not just create — stays visible, and nothing is reported as hidden.
+  Pins fail **open**, which is the direction that matters: failing closed would be
+  indistinguishable from losing notes.
+- **The hand-off tab asks for the permission.** A full page opened with
+  `?grant=pins` leads with the request; an ordinary one asks for nothing.
+- **Nothing is logged at `warn` level.** `chrome://extensions` files every
+  `console.warn` under a heading it calls **Errors**, so a warning on startup shows
+  up there looking like a fault. See below.
 
 Separately confirmed by intercepting `chrome.runtime.sendMessage`: nothing is sent
 while you type, and exactly one `noutieren/flush-pending` message goes out during
@@ -173,6 +201,36 @@ popup window size from the document's declared size, which _is_ verified, but th
 window it actually draws from the toolbar button deserves one human look — along
 with the usual things automation is bad at judging: theme switching, focus rings,
 and whether it feels right.
+
+The **permission dialog** is browser UI too, so granting `tabs` and watching pins
+start working is a manual step. Everything around the prompt is checked; answering
+it is not. See [Pin to URL](#pin-to-url) for why the prompt is raised from the
+full-page view rather than the popup.
+
+## Pin to URL
+
+Works the same as on Firefox — see the [main README](../README.md#pin-to-url) for
+the pattern syntax — with one difference forced by the popup.
+
+**Chrome destroys the toolbar popup the moment it loses focus.** Opening a
+permission dialog does exactly that, so the document is gone before the user can
+answer: the request never resolves and the prompt is dismissed. From a popup the
+permission cannot merely fail to be granted, it cannot be _asked_.
+
+So the popup does not try. `canPromptForPermission()` in
+[`../src/services/activeTabUrl.ts`](../src/services/activeTabUrl.ts) returns false
+for the `popup` surface, and **Enable Pin to URL** opens the full-page view — an
+ordinary tab, which survives losing focus — and raises the prompt there. Grant it,
+close the tab, and pins apply in the popup from then on.
+
+This is also why saving a pin never prompts on either browser. Pins are data:
+they store fine and sit inert without the permission, so there is nothing to gate,
+and a Chrome user's typed patterns are never lost to a dialog that could not be
+shown.
+
+Pins do not apply in the full-page view itself, which is a browser tab rather than
+something sitting beside one — so it is always a way back to everything, and it is
+the surface the permission is granted from.
 
 ## Before publishing to the Chrome Web Store
 

@@ -32,7 +32,7 @@ export function NotesPanel({
 }) {
   const {
     notes,
-    tabs,
+    allTabs,
     selectedTabId,
     selectedNoteId,
     selectNote,
@@ -151,7 +151,9 @@ export function NotesPanel({
       <footer className="notes-panel__footer">
         {searching
           ? `${itemCount} ${itemCount === 1 ? 'result' : 'results'}${
-              scope === 'all' ? ` across ${tabs.length} tabs` : ' in this tab'
+              // Every tab, because search deliberately looks past URL pins: a
+              // note must never become unfindable because of which page is open.
+              scope === 'all' ? ` across ${allTabs.length} tabs` : ' in this tab'
             }`
           : `${notes.length} ${notes.length === 1 ? 'note' : 'notes'}`}
       </footer>

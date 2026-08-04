@@ -37,7 +37,9 @@ export type IconName =
   | 'clearFormat'
   | 'moveTo'
   | 'warning'
-  | 'note';
+  | 'note'
+  | 'pin'
+  | 'pinOff';
 
 const STROKE = {
   fill: 'none',
@@ -215,6 +217,19 @@ const PATHS: Record<IconName, React.ReactNode> = {
     <>
       <rect x="2.5" y="2.5" width="11" height="11" rx="2" {...STROKE} />
       <path d="M5.5 6h5M5.5 8.5h5M5.5 11h3" {...STROKE} />
+    </>
+  ),
+  pin: (
+    <>
+      <path d="M6 2.5h4l-.5 4 2 2.5H4.5l2-2.5z" {...STROKE} />
+      <path d="M8 9v4.5" {...STROKE} />
+    </>
+  ),
+  pinOff: (
+    <>
+      <path d="M6 2.5h4l-.5 4 2 2.5H4.5l2-2.5z" {...STROKE} />
+      <path d="M8 9v4.5" {...STROKE} />
+      <path d="M2.5 2.5l11 11" {...STROKE} />
     </>
   ),
 };

@@ -166,6 +166,40 @@ const FIRST_NOTE = `(async () => {
   return all.length ? { id: all[0].id, updatedAt: all[0].updatedAt, plainText: all[0].plainText } : null;
 })()`;
 
+/**
+ * Adds a tab pinned to a site that is certainly not open.
+ *
+ * Written straight into IndexedDB rather than through the interface, because
+ * the point is to check how the app *reads* a pin it did not just create —
+ * including after a reload, which is when a wrongly-applied pin would hide it.
+ */
+const PIN_A_TAB = `(async () => {
+  const db = await new Promise((res, rej) => {
+    const r = indexedDB.open('colornote-tabs');
+    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+  });
+  const tabs = await new Promise((res, rej) => {
+    const r = db.transaction('tabs').objectStore('tabs').getAll();
+    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+  });
+  const id = 'verify-pinned-tab';
+  const now = Date.now();
+  await new Promise((res, rej) => {
+    const r = db.transaction('tabs', 'readwrite').objectStore('tabs').put({
+      id,
+      title: 'Pinned',
+      color: '#64748b',
+      position: tabs.length,
+      createdAt: now,
+      updatedAt: now,
+      urlPatterns: ['https://*.example.invalid/*'],
+    });
+    r.onsuccess = () => res(); r.onerror = () => rej(r.error);
+  });
+  db.close();
+  return id;
+})()`;
+
 /* ---------------------------------------------------------------- harness */
 
 const results = [];
@@ -423,7 +457,123 @@ try {
       { timeout: 5000, label: 'the shared note' },
     ).catch(() => false)) === true,
   );
+  /* ---------------------------------------------------------- url pins */
+
+  /*
+   * "Pin to URL" in the Chrome build.
+   *
+   * The permission dialog itself is browser UI and cannot be answered over the
+   * DevTools protocol, so what is checked here is everything around it: that
+   * `tabs` is declared optional and is genuinely not held on a fresh profile,
+   * that the matcher and the visibility rules behave in the real bundle rather
+   * than only under jsdom, and that a pin is inert — never inverted — while the
+   * permission is absent. Answering the prompt stays a manual step.
+   */
+  const permissionState = await page.eval(`(async () => ({
+    declaredOptional: chrome.runtime.getManifest().optional_permissions ?? [],
+    required: chrome.runtime.getManifest().permissions ?? [],
+    hasTabs: await chrome.permissions.contains({ permissions: ['tabs'] }),
+  }))()`);
+
+  check(
+    'tabs is declared optional, not required',
+    Array.isArray(permissionState?.declaredOptional) &&
+      permissionState.declaredOptional.includes('tabs') &&
+      !permissionState.required.includes('tabs'),
+    JSON.stringify(permissionState),
+  );
+  check(
+    'required permissions are still only storage and unlimitedStorage',
+    JSON.stringify(permissionState?.required) === JSON.stringify(['storage', 'unlimitedStorage']),
+    JSON.stringify(permissionState?.required),
+  );
+  check('a fresh profile does not hold the tabs permission', permissionState?.hasTabs === false);
+
+  // Without the permission the extension must not be able to read a URL. This
+  // is the check that would catch the permission silently becoming required.
+  const urlLeak = await page.eval(`(async () => {
+    try {
+      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+      return tabs.map((t) => t.url ?? null);
+    } catch (error) { return 'threw'; }
+  })()`);
+  check(
+    'cannot read a tab URL before the permission is granted',
+    urlLeak === 'threw' || (Array.isArray(urlLeak) && urlLeak.every((u) => !u)),
+    JSON.stringify(urlLeak),
+  );
+
+  // A tab pinned to a site that is definitely not open, written straight into
+  // IndexedDB. With the permission absent, pins must fail *open* — the tab
+  // stays visible — because failing closed is indistinguishable from data loss.
+  const pinnedTabId = await page.eval(PIN_A_TAB);
+  check('a pinned tab can be written to storage', typeof pinnedTabId === 'string');
+
   await page.close();
+
+  const afterPin = await browser.openPage(`chrome-extension://${id}/index.html?view=page`);
+  const tabCount = await until(
+    async () => {
+      const n = await afterPin.eval(`document.querySelectorAll('[role="tab"]').length`);
+      return Number(n) >= 2 ? Number(n) : null;
+    },
+    { timeout: 5000, label: 'the pinned tab to appear' },
+  ).catch(() => 0);
+  check(
+    'a pinned tab stays visible while the permission is absent',
+    tabCount >= 2,
+    `tabs rendered: ${tabCount}`,
+  );
+
+  const pinIndicator = await afterPin.eval(
+    `!!document.querySelector('[aria-label*="hidden by a URL pin" i]')`,
+  );
+  check('nothing is reported as hidden when pins cannot apply', pinIndicator === false);
+  await afterPin.close();
+
+  /*
+   * The hand-off tab.
+   *
+   * The popup cannot raise the permission dialog, so it opens the full page
+   * with `grant=pins`. That tab has to lead with the request — the first
+   * version did not, and simply arrived on the editor having asked for
+   * nothing, which read as the button doing something random.
+   */
+  const grant = await browser.openPage(`chrome-extension://${id}/index.html?view=page&grant=pins`);
+  const banner = await until(
+    () =>
+      grant.eval(
+        `(() => { const b = document.querySelector('[aria-label="Enable Pin to URL"]');
+           return b ? b.textContent : null; })()`,
+      ),
+    { timeout: 5000, label: 'the grant banner' },
+  ).catch(() => null);
+  check(
+    'a tab opened to grant the permission asks for it',
+    typeof banner === 'string' && /Grant access/.test(banner),
+    String(banner).slice(0, 120),
+  );
+
+  const ordinary = await browser.openPage(`chrome-extension://${id}/index.html?view=page`);
+  await until(() => ordinary.eval(`!!document.querySelector('.ProseMirror')`), {
+    label: 'the ordinary full page',
+  }).catch(() => false);
+  check(
+    'an ordinary full-page tab does not ask for anything',
+    (await ordinary.eval(`!!document.querySelector('[aria-label="Enable Pin to URL"]')`)) === false,
+  );
+  await ordinary.close();
+
+  // The whole point of moving the log off `console.warn`: this panel is what
+  // chrome://extensions shows the user under the heading "Errors".
+  const noisy = grant.logs.filter((l) => l.level === 'warning' || l.level === 'warn');
+  check(
+    'nothing is logged at warn level, which Chrome files under "Errors"',
+    noisy.length === 0,
+    noisy.map((l) => l.text.slice(0, 100)).join(' | '),
+  );
+
+  await grant.close();
 
   /* ------------------------------------------------------------ report */
 

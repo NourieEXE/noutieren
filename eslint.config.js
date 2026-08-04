@@ -15,6 +15,11 @@ export default tseslint.config(
       'chrome_version/public/icons',
       'coverage',
       'node_modules',
+      // Staged release artifacts: built bundles copied here for upload, plus an
+      // unpacked copy of the Chrome build for `Load unpacked`. Gitignored, but
+      // flat config does not read .gitignore, so linting them would fail on
+      // files that are deliberately outside the TypeScript project.
+      'releases',
     ],
   },
   js.configs.recommended,

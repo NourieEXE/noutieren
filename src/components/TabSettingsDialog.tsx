@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import type { NoteTab } from '../types';
 import { ConfirmDialog, Dialog } from './Dialog';
 import { ColorPicker } from './ColorPicker';
+import { PinToUrlField } from './PinToUrlField';
 import { Icon } from './Icons';
 
 /**
@@ -21,6 +22,10 @@ export function TabSettingsDialog({
   onRecolor,
   onMove,
   onDelete,
+  onPin,
+  onRequestPermission,
+  activeUrl,
+  pinPermissionGranted,
 }: {
   tab: NoteTab;
   noteCount: number;
@@ -32,6 +37,10 @@ export function TabSettingsDialog({
   onRecolor: (color: string) => void;
   onMove: (delta: -1 | 1) => void;
   onDelete: () => void;
+  onPin: (patterns: string[]) => Promise<void>;
+  onRequestPermission: () => Promise<'granted' | 'denied' | 'elsewhere'>;
+  activeUrl: string | null;
+  pinPermissionGranted: boolean;
 }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   // The name field lives in a child that only exists while the dialog is open,
@@ -76,6 +85,16 @@ export function TabSettingsDialog({
         />
 
         <ColorPicker value={tab.color} onChange={onRecolor} label="Tab color" />
+
+        <PinToUrlField
+          patterns={tab.urlPatterns ?? []}
+          activeUrl={activeUrl}
+          granted={pinPermissionGranted}
+          onRequestPermission={onRequestPermission}
+          label="Pin to URL"
+          description="Show this tab only while one of these pages is open. Leave empty to always show it."
+          onChange={(patterns) => void onPin(patterns)}
+        />
 
         <div className="field">
           <span className="field__label">Position</span>

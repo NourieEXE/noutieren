@@ -9,6 +9,7 @@ import { TabStrip } from '../components/TabStrip';
 import { NotesPanel } from '../components/NotesPanel';
 import { NoteEditorPane } from '../components/NoteEditorPane';
 import { SettingsMenu } from '../components/SettingsMenu';
+import { PinPermissionBanner } from '../components/PinPermissionBanner';
 import { HelpDialog } from '../components/HelpDialog';
 import { Icon } from '../components/Icons';
 
@@ -21,7 +22,7 @@ import { Icon } from '../components/Icons';
  * sidebar and a wide sidebar behaves like the page.
  */
 export function App() {
-  const { preferences, updatePreferences, actions, flushSaves, loading, selectedTab } =
+  const { preferences, updatePreferences, actions, flushSaves, loading, selectedTab, pinStatus } =
     useWorkspace();
   const [helpOpen, setHelpOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -89,6 +90,8 @@ export function App() {
 
         <SettingsMenu />
       </header>
+
+      <PinPermissionBanner granted={pinStatus.granted} />
 
       <TabStrip notesPanelId={collapsed ? undefined : notesPanelId} />
 

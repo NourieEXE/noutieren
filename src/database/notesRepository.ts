@@ -3,6 +3,7 @@ import { getDatabase } from './db';
 import type { JSONContent, Note, NoteMeta, NotePatch, SearchScope } from '../types';
 import { createId } from '../utils/id';
 import { DEFAULT_NOTE_COLOR, normalizeColor } from '../utils/colors';
+import { sanitizePatternList } from '../utils/matchPattern';
 import { createEmptyDocument, extractPlainText } from '../editor/document';
 
 /**
@@ -171,6 +172,15 @@ export async function applyNotePatch(
 
     if (patch.content !== undefined && patch.plainText === undefined) {
       next.plainText = extractPlainText(patch.content);
+    }
+
+    // Assigned outside the spread so clearing a pin deletes the key rather than
+    // storing an empty array, which would then have to be treated as equivalent
+    // to absent everywhere else.
+    if (patch.urlPatterns !== undefined) {
+      const patterns = sanitizePatternList(patch.urlPatterns);
+      if (patterns.length > 0) next.urlPatterns = patterns;
+      else delete next.urlPatterns;
     }
 
     await db.notes.put(next);

@@ -303,6 +303,88 @@ body {
   font-size: 13px;
 }
 
+.field__hint {
+  margin: 0;
+  color: var(--fg-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+/* ------------------------------------------------------------- url pins */
+
+.pin-list {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pin-list__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 5px 6px 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  color: var(--fg-muted);
+}
+
+.pin-list__text {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+  flex: 1;
+}
+
+.pin-list__pattern {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 12px;
+  color: var(--fg);
+}
+
+.pin-list__description {
+  font-size: 11px;
+  color: var(--fg-subtle);
+}
+
+.pin-list__empty {
+  margin: 0;
+  font-size: 13px;
+  color: var(--fg-subtle);
+}
+
+.pin-add {
+  display: flex;
+  gap: var(--space-2);
+  align-items: start;
+}
+
+.pin-add .input {
+  flex: 1;
+  min-width: 0;
+}
+
+.tab__pin {
+  display: inline-flex;
+  flex: none;
+  opacity: 0.75;
+}
+
+/*
+ * The "something is hidden" control. Given the accent rather than left to look
+ * like the other icon buttons: while a pin is hiding content, finding this is
+ * the whole answer to "where did my notes go?".
+ */
+.icon-button--active {
+  background: var(--accent-soft, rgba(127, 127, 127, 0.22));
+  color: var(--fg);
+}
+
 .checkbox {
   display: inline-flex;
   align-items: center;
@@ -1342,6 +1424,63 @@ kbd {
 .notice--error {
   border-color: var(--danger);
   color: var(--danger);
+}
+
+/*
+ * Used where something is saved but not yet doing anything — inert URL pins
+ * waiting on the optional permission. Deliberately not `--error`: nothing has
+ * gone wrong, and colouring it as a failure would suggest the pin was lost.
+ */
+.notice--warning {
+  margin: 0;
+  border-color: var(--border-strong);
+  background: var(--bg-surface);
+  color: var(--fg-muted);
+}
+
+.notice__body {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+  min-width: 0;
+}
+
+.notice__text {
+  margin: 0;
+  line-height: 1.45;
+}
+
+/*
+ * The full-page permission prompt. Sits above the tab strip, full width, so a
+ * tab opened by the popup explains itself before anything else is read.
+ */
+.banner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-surface);
+  color: var(--fg);
+  font-size: 13px;
+}
+
+.banner--ok {
+  align-items: center;
+  color: var(--fg-muted);
+}
+
+.banner__body {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+  min-width: 0;
+}
+
+.banner__text {
+  margin: 0;
+  max-width: 70ch;
+  line-height: 1.5;
 }
 
 .toast-layer {

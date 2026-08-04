@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { useLiveQuery } from 'dexie-react-hooks';
 import {
   WorkspaceContext,
+  type PinStatus,
   type WorkspaceActions,
   type WorkspaceApi,
 } from '../hooks/workspaceContext';
@@ -29,6 +30,19 @@ import { saveQueue } from '../services/saveQueue';
 import { getTeardownHandoff } from '../services/teardown';
 import { savePreferences } from '../services/preferences';
 import { describeError, logError } from '../services/errors';
+import {
+  canPromptForPermission,
+  hasTabsPermission,
+  requestTabsPermission,
+} from '../services/activeTabUrl';
+import {
+  resolveNoteAfterPinChange,
+  resolveTabAfterPinChange,
+  selectVisible,
+  type PinContext,
+} from '../services/pinVisibility';
+import { useActiveUrl } from '../hooks/useActiveUrl';
+import { detectViewMode, openFullPageEditor } from '../services/webext';
 
 /**
  * Owns workspace state: live tab/note queries, the current selection, and every
@@ -71,6 +85,48 @@ export function WorkspaceProvider({
 
   const tabs = useLiveQuery(() => listTabs(), [reloadKey]);
 
+  /* ------------------------------------------------------------ url pins */
+
+  const { url: activeUrl, granted } = useActiveUrl();
+
+  // The full-page view is itself a browser tab, so there is no "page next to
+  // the sidebar" to pin against. Read once: the surface cannot change without
+  // a fresh document.
+  const [pinsInert] = useState(() => detectViewMode() === 'page');
+
+  const pinContext = useMemo<PinContext>(
+    () => ({
+      activeUrl,
+      granted,
+      showHidden: preferences.showHiddenPins,
+      inert: pinsInert,
+    }),
+    [activeUrl, granted, preferences.showHiddenPins, pinsInert],
+  );
+
+  /*
+   * The tab actually shown, once pins are taken into account.
+   *
+   * Derived during render rather than written back into `selectedTabId`. Two
+   * reasons, and the second is the one that matters:
+   *
+   * 1. Writing state from an effect that only observes other state costs a
+   *    second render pass for nothing.
+   * 2. `selectedTabId` is the user's *choice*, and it is persisted. Overwriting
+   *    it because they happened to navigate would mean returning to the
+   *    original page leaves them somewhere else. Deriving instead lets the
+   *    choice survive: leave github.com and the pinned tab steps aside; come
+   *    back and it returns, with nothing having been overwritten.
+   *
+   * Everything downstream — the notes query, the selection the UI reports —
+   * follows this, not the stored id.
+   */
+  const effectiveTabId = useMemo(
+    () =>
+      tabs ? (resolveTabAfterPinChange(tabs, selectedTabId, pinContext) ?? selectedTabId) : null,
+    [tabs, selectedTabId, pinContext],
+  );
+
   /**
    * Notes are returned together with the tab they were read for. A result for a
    * previous tab is treated as "still loading" so the UI never briefly shows
@@ -78,12 +134,12 @@ export function WorkspaceProvider({
    */
   const notesResult = useLiveQuery(
     async () => ({
-      tabId: selectedTabId,
-      notes: selectedTabId ? await listNotesByTab(selectedTabId) : ([] as NoteMeta[]),
+      tabId: effectiveTabId,
+      notes: effectiveTabId ? await listNotesByTab(effectiveTabId) : ([] as NoteMeta[]),
     }),
-    [selectedTabId, reloadKey],
+    [effectiveTabId, reloadKey],
   );
-  const notes = notesResult && notesResult.tabId === selectedTabId ? notesResult.notes : undefined;
+  const notes = notesResult && notesResult.tabId === effectiveTabId ? notesResult.notes : undefined;
 
   const noteCountsQuery = useLiveQuery(() => noteCountsByTab(), [reloadKey]);
   // Memoised so the fallback object does not change identity every render and
@@ -91,6 +147,41 @@ export function WorkspaceProvider({
   const noteCounts = useMemo(() => noteCountsQuery ?? {}, [noteCountsQuery]);
 
   const loading = tabs === undefined || notes === undefined;
+
+  /*
+   * The two items a pin must not hide, because they were explicitly asked for.
+   *
+   * `revealed` is set only by `revealNote`, which is how a search result opens.
+   * Search deliberately looks past pins so notes never become unfindable, so
+   * opening a result has to actually open it. Everything else — including the
+   * ordinary selection — is filtered normally, which is what makes a pinned
+   * note disappear when you navigate away from its page.
+   */
+  const [revealed, setRevealed] = useState<{ tabId: string; noteId: string } | null>(null);
+
+  const visible = useMemo(
+    () =>
+      selectVisible(
+        tabs ?? [],
+        notes ?? [],
+        revealed?.tabId ?? null,
+        revealed?.noteId ?? null,
+        pinContext,
+      ),
+    [tabs, notes, revealed, pinContext],
+  );
+
+  /*
+   * The note actually shown, once pins are taken into account.
+   *
+   * Derived exactly like `effectiveTabId`, and for the same reason: the stored
+   * `selectedNoteId` is the user's choice and is left untouched, so leaving the
+   * pinned page steps off the note and returning to it steps back on.
+   */
+  const effectiveNoteId = useMemo(() => {
+    if (revealed?.noteId && revealed.noteId === selectedNoteId) return selectedNoteId;
+    return resolveNoteAfterPinChange(notes ?? [], selectedNoteId, pinContext) ?? selectedNoteId;
+  }, [notes, selectedNoteId, pinContext, revealed]);
 
   /* ------------------------------------------------------------ selection */
 
@@ -112,6 +203,8 @@ export function WorkspaceProvider({
       }
       selectedNoteIdRef.current = id;
       setSelectedNoteId(id);
+      // An ordinary click is not a reveal, so any standing exemption ends here.
+      setRevealed(null);
       persistSelection({ selectedNoteId: id });
     },
     [persistSelection],
@@ -126,6 +219,7 @@ export function WorkspaceProvider({
       // while the new tab's notes load; the repair effect picks the first note.
       selectedNoteIdRef.current = null;
       setSelectedNoteId(null);
+      setRevealed(null);
       persistSelection({ selectedTabId: id, selectedNoteId: null });
     },
     [persistSelection],
@@ -138,6 +232,9 @@ export function WorkspaceProvider({
       setSelectedTabId(tabId);
       selectedNoteIdRef.current = noteId;
       setSelectedNoteId(noteId);
+      // Exempt this one item from pins until the next ordinary selection: the
+      // user asked for it by name, and search sees past pins by design.
+      setRevealed({ tabId, noteId });
       persistSelection({ selectedTabId: tabId, selectedNoteId: noteId });
     },
     [persistSelection],
@@ -202,13 +299,29 @@ export function WorkspaceProvider({
       // A note that exists but sits in another tab is not this list's business;
       // only a note that is truly gone triggers a repair.
       if (!found) repair();
-      else if (found.tabId !== selectedTabId) repair();
+      else if (found.tabId !== effectiveTabId) repair();
     });
 
     return () => {
       cancelled = true;
     };
-  }, [notes, selectedNoteId, selectedTabId, persistSelection]);
+  }, [notes, selectedNoteId, effectiveTabId, persistSelection]);
+
+  /*
+   * Write out a note a pin has just stepped off.
+   *
+   * Stepping off happens without `selectNote`, which is what normally flushes
+   * the note being left, so nothing else would do it here. The queue would
+   * still write on its own debounce, but the editor for that note has already
+   * unmounted by then — this closes the window rather than relying on it. No
+   * state is set, so this is a genuine external-system effect.
+   */
+  const flushedNoteRef = useRef(effectiveNoteId);
+  useEffect(() => {
+    const previous = flushedNoteRef.current;
+    flushedNoteRef.current = effectiveNoteId;
+    if (previous && previous !== effectiveNoteId) void saveQueue.flush(previous);
+  }, [effectiveNoteId]);
 
   /* -------------------------------------------------------------- flushing */
 
@@ -320,10 +433,46 @@ export function WorkspaceProvider({
           });
         }),
 
+      /*
+       * Saving a pin never asks for anything.
+       *
+       * Storing the patterns and holding the permission are separate concerns:
+       * a pin is inert without the permission but perfectly valid, so writing
+       * it costs nothing and refusing to write it would discard what the user
+       * typed. The prompt is `requestPinPermission`, raised from a control that
+       * says what it is for.
+       */
+      pinTab: (id, patterns) =>
+        guard('pinTab', async () => void (await updateTab(id, { urlPatterns: patterns }))),
+
+      pinNote: (id, patterns) =>
+        guard('pinNote', async () => {
+          saveQueue.schedule(id, { urlPatterns: patterns });
+          await saveQueue.flush(id);
+        }),
+
+      requestPinPermission: async () => {
+        if (await hasTabsPermission()) return 'granted';
+
+        // Chrome's popup cannot raise the dialog at all — see
+        // `canPromptForPermission`. Hand the job to the full-page view, which
+        // is an ordinary tab, rather than firing a request that cannot resolve.
+        if (!canPromptForPermission(detectViewMode())) {
+          // Flagged, so the tab that opens leads with the request rather than
+          // dropping the user into the editor with no idea why it appeared.
+          await openFullPageEditor({ forPinGrant: true });
+          return 'elsewhere';
+        }
+
+        return (await requestTabsPermission()) ? 'granted' : 'denied';
+      },
+
       createNote: () =>
         guard('createNote', async () => {
-          if (!selectedTabId) return;
-          const note = await createNoteRow({ tabId: selectedTabId });
+          // The tab on screen, not the stored choice: a new note belongs where
+          // the user is looking.
+          if (!effectiveTabId) return;
+          const note = await createNoteRow({ tabId: effectiveTabId });
           selectNote(note.id);
         }),
 
@@ -368,7 +517,9 @@ export function WorkspaceProvider({
 
       deleteNote: (id) =>
         guard('deleteNote', async () => {
-          const list = notes ?? [];
+          // The visible list, so the note selected after a delete is one the
+          // user can actually see rather than something a pin is hiding.
+          const list = visible.notes;
           const index = list.findIndex((note) => note.id === id);
           const neighbour = list[index + 1] ?? list[index - 1] ?? null;
 
@@ -385,7 +536,7 @@ export function WorkspaceProvider({
               onAction: () => {
                 void (async () => {
                   try {
-                    const fallback = selectedTabId ?? tabs?.[0]?.id;
+                    const fallback = effectiveTabId ?? tabs?.[0]?.id;
                     const restored = await restoreNote(snapshot, fallback);
                     selectNote(restored.id);
                   } catch (error) {
@@ -407,7 +558,7 @@ export function WorkspaceProvider({
           await Promise.resolve();
         }),
     };
-  }, [notes, reportError, selectNote, selectTab, selectedTabId, tabs, toasts]);
+  }, [effectiveTabId, reportError, selectNote, selectTab, tabs, toasts, visible.notes]);
 
   /* ------------------------------------------------------------ assembling */
 
@@ -418,19 +569,40 @@ export function WorkspaceProvider({
     });
   }, []);
 
+  const setShowHiddenPins = useCallback(
+    (value: boolean) => {
+      updatePreferences({ showHiddenPins: value });
+    },
+    [updatePreferences],
+  );
+
   const value = useMemo<WorkspaceApi>(() => {
-    const tabList = tabs ?? [];
-    const noteList = notes ?? [];
+    const tabList = visible.tabs;
+    const noteList = visible.notes;
+    const pinStatus: PinStatus = {
+      activeUrl,
+      granted,
+      showHidden: preferences.showHiddenPins,
+      inert: pinsInert,
+      hiddenTabCount: visible.hiddenTabCount,
+      hiddenNoteCount: visible.hiddenNoteCount,
+    };
     return {
       loading,
       tabs: tabList,
       notes: noteList,
+      allTabs: tabs ?? [],
       noteCounts,
       totalNoteCount: Object.values(noteCounts).reduce((sum, count) => sum + count, 0),
-      selectedTabId,
-      selectedNoteId,
-      selectedTab: tabList.find((tab) => tab.id === selectedTabId) ?? null,
-      selectedNote: noteList.find((note) => note.id === selectedNoteId) ?? null,
+      pinStatus,
+      setShowHiddenPins,
+      // The tab on screen. A pin can make this differ from the stored choice,
+      // which is intentionally left alone so it can be returned to.
+      selectedTabId: effectiveTabId,
+      // The note on screen, for the same reason and left alone the same way.
+      selectedNoteId: effectiveNoteId,
+      selectedTab: tabList.find((tab) => tab.id === effectiveTabId) ?? null,
+      selectedNote: noteList.find((note) => note.id === effectiveNoteId) ?? null,
       selectTab,
       selectNote,
       revealNote,
@@ -441,18 +613,22 @@ export function WorkspaceProvider({
     };
   }, [
     actions,
+    activeUrl,
+    effectiveNoteId,
+    effectiveTabId,
     flushSaves,
+    granted,
     loading,
     noteCounts,
-    notes,
+    pinsInert,
     preferences,
     revealNote,
     selectNote,
     selectTab,
-    selectedNoteId,
-    selectedTabId,
+    setShowHiddenPins,
     tabs,
     updatePreferences,
+    visible,
   ]);
 
   return <WorkspaceContext.Provider value={value}>{children}</WorkspaceContext.Provider>;

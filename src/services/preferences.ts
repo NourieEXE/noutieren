@@ -21,6 +21,7 @@ export const DEFAULT_PREFERENCES: AppPreferences = {
   theme: 'system',
   searchAllTabs: false,
   lastExportedAt: null,
+  showHiddenPins: false,
 };
 
 const THEMES: readonly ThemePreference[] = ['system', 'light', 'dark'];
@@ -38,6 +39,7 @@ export function sanitizePreferences(value: unknown): AppPreferences {
     theme: THEMES.includes(theme as ThemePreference) ? (theme as ThemePreference) : 'system',
     searchAllTabs: source.searchAllTabs === true,
     lastExportedAt: isValidTimestamp(source.lastExportedAt) ? source.lastExportedAt : null,
+    showHiddenPins: source.showHiddenPins === true,
   };
 }
 

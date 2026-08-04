@@ -2,6 +2,7 @@ import { getDatabase } from './db';
 import type { NoteTab } from '../types';
 import { createId } from '../utils/id';
 import { DEFAULT_TAB_COLOR, normalizeColor } from '../utils/colors';
+import { sanitizePatternList } from '../utils/matchPattern';
 
 /**
  * All tab reads and writes. Components never touch Dexie directly.
@@ -25,12 +26,15 @@ export async function countTabs(): Promise<number> {
   return getDatabase().tabs.count();
 }
 
-export async function createTab(input: { title?: string; color?: string } = {}): Promise<NoteTab> {
+export async function createTab(
+  input: { title?: string; color?: string; urlPatterns?: string[] } = {},
+): Promise<NoteTab> {
   const db = getDatabase();
   const now = Date.now();
 
   return db.transaction('rw', db.tabs, async () => {
     const last = await db.tabs.orderBy('position').last();
+    const patterns = sanitizePatternList(input.urlPatterns);
     const tab: NoteTab = {
       id: createId(),
       title: normalizeTitle(input.title, DEFAULT_TAB_TITLE),
@@ -38,6 +42,8 @@ export async function createTab(input: { title?: string; color?: string } = {}):
       position: last ? last.position + 1 : 0,
       createdAt: now,
       updatedAt: now,
+      // Omitted rather than stored empty, so an unpinned tab is one shape.
+      ...(patterns.length > 0 ? { urlPatterns: patterns } : {}),
     };
     await db.tabs.add(tab);
     return tab;
@@ -46,7 +52,7 @@ export async function createTab(input: { title?: string; color?: string } = {}):
 
 export async function updateTab(
   id: string,
-  patch: { title?: string; color?: string },
+  patch: { title?: string; color?: string; urlPatterns?: string[] },
 ): Promise<NoteTab | undefined> {
   const db = getDatabase();
   return db.transaction('rw', db.tabs, async () => {
@@ -59,6 +65,16 @@ export async function updateTab(
       ...(patch.color !== undefined ? { color: normalizeColor(patch.color, current.color) } : {}),
       updatedAt: Math.max(Date.now(), current.updatedAt + 1),
     };
+
+    // Assigned outside the spread so clearing a pin deletes the key instead of
+    // leaving `urlPatterns: []` behind, which would then have to be treated as
+    // equivalent to absent everywhere else.
+    if (patch.urlPatterns !== undefined) {
+      const patterns = sanitizePatternList(patch.urlPatterns);
+      if (patterns.length > 0) next.urlPatterns = patterns;
+      else delete next.urlPatterns;
+    }
+
     await db.tabs.put(next);
     return next;
   });

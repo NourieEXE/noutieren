@@ -8,6 +8,7 @@ import { colorName } from '../utils/colors';
 import type { NoteMeta } from '../types';
 import { Dialog } from './Dialog';
 import { ColorPicker } from './ColorPicker';
+import { PinToUrlField } from './PinToUrlField';
 import { Menu, MenuItem, MenuSeparator } from './Menu';
 import { Icon } from './Icons';
 import { SaveStatus } from './SaveStatus';
@@ -20,10 +21,11 @@ import { SaveStatus } from './SaveStatus';
  * keeps the notes list itself cheap to render for very long lists.
  */
 export function NoteEditorPane() {
-  const { selectedNote, notes, tabs, selectedTabId, actions } = useWorkspace();
+  const { selectedNote, notes, allTabs, selectedTabId, actions, pinStatus } = useWorkspace();
   const paneRef = useRef<HTMLElement>(null);
   const [colorDialogOpen, setColorDialogOpen] = useState(false);
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
+  const [pinDialogOpen, setPinDialogOpen] = useState(false);
 
   const noteId = selectedNote?.id ?? null;
   const { status, content, reload } = useNoteContent(noteId);
@@ -66,7 +68,10 @@ export function NoteEditorPane() {
   }
 
   const index = notes.findIndex((note) => note.id === selectedNote.id);
-  const otherTabs = tabs.filter((tab) => tab.id !== selectedNote.tabId);
+  // From every tab, not the visible ones: a URL pin hides a tab, and moving a
+  // note must never be blocked by which page happens to be open.
+  const otherTabs = allTabs.filter((tab) => tab.id !== selectedNote.tabId);
+  const notePinned = (selectedNote.urlPatterns?.length ?? 0) > 0;
 
   return (
     <section className="editor-pane" aria-label="Note editor" ref={paneRef}>
@@ -131,6 +136,15 @@ export function NoteEditorPane() {
               >
                 <Icon name="moveTo" />
                 Move to tab…
+              </MenuItem>
+              <MenuItem
+                onSelect={() => {
+                  close();
+                  setPinDialogOpen(true);
+                }}
+              >
+                <Icon name="pin" />
+                {notePinned ? 'Edit URL pin…' : 'Pin to URL…'}
               </MenuItem>
               <MenuSeparator />
               <MenuItem
@@ -199,6 +213,31 @@ export function NoteEditorPane() {
           value={selectedNote.color}
           label="Choose a color for this note"
           onChange={(color) => actions.recolorNote(selectedNote.id, color)}
+        />
+      </Dialog>
+
+      <Dialog
+        open={pinDialogOpen}
+        onClose={() => setPinDialogOpen(false)}
+        title="Pin to URL"
+        footer={
+          <button
+            type="button"
+            className="button button--primary"
+            onClick={() => setPinDialogOpen(false)}
+          >
+            Done
+          </button>
+        }
+      >
+        <PinToUrlField
+          patterns={selectedNote.urlPatterns ?? []}
+          activeUrl={pinStatus.activeUrl}
+          granted={pinStatus.granted}
+          onRequestPermission={actions.requestPinPermission}
+          label="Show this note only on"
+          description="Show this note only while one of these pages is open. Leave empty to always show it."
+          onChange={(patterns) => void actions.pinNote(selectedNote.id, patterns)}
         />
       </Dialog>
 
