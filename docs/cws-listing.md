@@ -1,5 +1,12 @@
 # Chrome Web Store listing copy
 
+> Live at
+> <https://chromewebstore.google.com/detail/noutieren/fehabengonhjmgghempjpcgfkggppknf>
+> as _Noutieren_.
+>
+> Permission justifications — required by the Privacy practices tab before a build
+> using `tabs` can be published — are in [`permissions.md`](permissions.md).
+
 A spare description, kept in case the one already in the Developer Dashboard needs
 replacing. The dashboard is the source of truth for what is live; this file is just
 somewhere the wording can be reviewed and edited alongside the code.
@@ -27,6 +34,13 @@ ORGANISE
 • Move notes between tabs, duplicate them, reorder them
 • Search titles and text in the current tab, or across every tab at once
 
+PIN TO URL
+• Show a tab, or a single note, only while a particular page is open
+• Pin to one exact address, a whole site, or everything under a path
+• Patterns like https://*.youtube.com/* — the syntax browsers use themselves
+• Anything hidden is one click away, and never deleted
+• Optional: needs your permission, and only if you use it (see below)
+
 WRITE
 • Bold, italic, underline, strikethrough
 • Headings, bulleted lists, numbered lists and checklists
@@ -39,8 +53,24 @@ YOUR NOTES ARE YOURS
 • No cloud sync, no telemetry, no analytics, no ads
 • No network requests of any kind — the extension cannot phone home
 • No content scripts and no host permissions, so it cannot read the pages you visit
-• Two permissions only: storage, and unlimitedStorage so your notes are never capped
+• Two permissions at install: storage, and unlimitedStorage so notes are never capped
 • Export everything to a plain, readable JSON file at any time, and import it back
+
+WHY IT ASKS FOR TAB ACCESS
+
+Only if you use "Pin to URL", and it asks the first time you turn it on.
+
+Pinning lets you say "show this tab only while I'm on YouTube". To do that,
+Noutieren has to know which page you're currently on — that's the address of the
+tab you're viewing, and nothing more.
+
+• It is never requested at install, and never on update
+• If you never pin anything, you are never asked, and nothing changes
+• The address is compared against the patterns you typed, in memory, and then
+  forgotten — never saved, never in a backup, never sent anywhere
+• Noutieren still cannot read the CONTENT of any page, only the tab's address
+• You can say no: your pins stay saved and simply do nothing
+• You can withdraw it at any time, and nothing is lost
 
 ALSO
 • Light, dark and system themes
