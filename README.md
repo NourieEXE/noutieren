@@ -152,8 +152,7 @@ Pins **fail open, never closed**: without the permission, or when the address is
 everything is shown. Failing the other way would be indistinguishable from losing notes.
 
 The address is compared in memory and never stored, exported or transmitted. Noutieren still
-cannot read the _contents_ of any page. See [PRIVACY.md](PRIVACY.md) for the full statement,
-and [docs/permissions.md](docs/permissions.md) for the store-listing wording.
+cannot read the _contents_ of any page. See [PRIVACY.md](PRIVACY.md) for the full statement.
 
 **On Chrome the prompt appears in the full-page view.** Chrome destroys the toolbar popup the
 moment it loses focus, which is exactly what a permission dialog does — the popup would be gone
