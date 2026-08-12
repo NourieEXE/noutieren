@@ -1,94 +1,61 @@
 # Noutieren
 
-**Private, local-first notes in the Firefox sidebar, organized into color-labeled tabs.**
+Notes in the Firefox sidebar, sorted into tabs I can name and colour. I wanted
+somewhere to put a thought without opening a document or making an account, so I
+built one. It also runs in Chrome, as a popup.
 
-Rich text, instant local search, and JSON backups, with no account, no sync, no telemetry
-and no network requests of any kind. Two permissions at install, `storage` and
-`unlimitedStorage`, plus one optional permission you are only asked for if you use
-[Pin to URL](#pin-to-url).
+Everything stays in the browser profile. No account, no sync, no telemetry, no
+network requests at all.
 
-It lives in the sidebar, and opens in a full browser tab when you want more room.
+<img src="docs/noutieren.png" alt="Noutieren open in the Firefox sidebar: a tab strip with two color-labeled tabs, a notes list, and the rich-text editor below it" width="360">
 
-<p align="center">
-  <img src="docs/noutieren.png" alt="Noutieren open in the Firefox sidebar: a tab strip with two color-labeled tabs, a notes list, and the rich-text editor below it" width="360">
-</p>
-
-<p align="center">
-  <a href="https://addons.mozilla.org/en-US/firefox/addon/noutieren-notes/"><strong>Install for Firefox →</strong></a>
-  &nbsp;·&nbsp;
-  <a href="https://chromewebstore.google.com/detail/noutieren/fehabengonhjmgghempjpcgfkggppknf"><strong>Install for Chrome →</strong></a>
-  &nbsp;·&nbsp;
-  <a href="chrome_version/README.md">Chrome build notes</a>
-</p>
-
-<p align="center"><sub>Everything below is for building it yourself. To just use it, the link above is all you need.</sub></p>
-
-| At a glance    |                                                                                                                                                                                                 |
-| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Install**    | [addons.mozilla.org](https://addons.mozilla.org/en-US/firefox/addon/noutieren-notes/) · [Chrome Web Store](https://chromewebstore.google.com/detail/noutieren/fehabengonhjmgghempjpcgfkggppknf) |
-| **Status**     | Published on AMO and the Chrome Web Store; in daily use                                                                                                                                         |
-| **Requires**   | Firefox 142+ (desktop), or Chrome 111+                                                                                                                                                          |
-| **Built with** | React · TypeScript · Vite · Tiptap/ProseMirror · Dexie/IndexedDB                                                                                                                                |
-| **Tests**      | 343, plus typecheck, lint, a build audit and `web-ext lint`                                                                                                                                     |
-| **License**    | MIT                                                                                                                                                                                             |
-| **Privacy**    | No data collected, see [PRIVACY.md](PRIVACY.md)                                                                                                                                                 |
-| **Building**   | Reproducible build steps in [BUILDING.md](BUILDING.md)                                                                                                                                          |
-| **Chrome**     | Popup build, [store listing](https://chromewebstore.google.com/detail/noutieren/fehabengonhjmgghempjpcgfkggppknf), notes in [chrome_version/](chrome_version/README.md)                         |
-
-### Quick start
-
-Installing from
-[addons.mozilla.org](https://addons.mozilla.org/en-US/firefox/addon/noutieren-notes/) needs
-nothing but a click. To build from source instead:
+If you just want to use it:
+[Firefox](https://addons.mozilla.org/en-US/firefox/addon/noutieren-notes/) or
+[Chrome](https://chromewebstore.google.com/detail/noutieren/fehabengonhjmgghempjpcgfkggppknf).
+Needs Firefox 142+ or Chrome 111+. Everything below is about building it yourself.
 
 ```bash
 npm install
 npm run build        # unpacked extension in dist/
-npm run firefox      # or: load dist/manifest.json via about:debugging
+npm run firefox      # or load dist/manifest.json via about:debugging
 ```
 
-Other install routes, including signing your own build for permanent installation, are under
-[Installing permanently](#installing-permanently-signing).
+Built with React, TypeScript, Vite, Tiptap/ProseMirror and Dexie. MIT licensed.
+[BUILDING.md](BUILDING.md) has the reproducible build steps,
+[PRIVACY.md](PRIVACY.md) the data situation, and
+[chrome_version/](chrome_version/README.md) the Chrome notes.
 
 ### Contents
 
-- [Features](#features) · [Pin to URL](#pin-to-url) · [Privacy](#privacy) · [Requirements](#requirements)
+- [What it does](#what-it-does) · [Pin to URL](#pin-to-url) · [Privacy](#privacy) · [Requirements](#requirements)
 - [Install](#install-dependencies) · [Development](#run-in-development) · [Build](#build) · [Package](#package-with-web-ext)
 - [Installing permanently](#installing-permanently-signing) · [Keyboard shortcuts](#keyboard-shortcuts)
 - [Data storage](#data-storage) · [Renaming and identifiers](#renaming-and-identifiers) · [Re-signing](#making-changes-and-re-signing)
 - [Export and import](#export-and-import) · [Project structure](#project-structure) · [Testing](#testing-and-checks) · [Known limitations](#known-limitations)
 - [Chrome](#chrome)
 
-## Features
+## What it does
 
-- **Color-labeled tabs.** Any number of tabs, each with its own name and color, reorderable,
-  with a note count. Selected tabs are filled with their own color using a foreground chosen
-  for contrast, never text dropped onto an arbitrary background.
-- **Notes in every tab.** No limit beyond your disk. Each note has its own title, color,
-  position, last-updated time and plain-text preview.
-- **Rich text** via Tiptap/ProseMirror: bold, italic, underline, strikethrough, paragraph,
-  headings 1–3, bulleted, numbered and check lists, block quotes, inline code, code blocks,
-  links, undo/redo and clear formatting. Toolbar buttons show active state, disable when
-  unavailable, and keep your text selection.
-- **Autosave.** Debounced ~400 ms, flushed immediately on note switch, blur, tab hide,
-  window unload and Ctrl/Cmd+S, with a `Saving…` / `Saved` indicator.
-- **[Pin to URL](#pin-to-url).** A tab or a single note can be set to appear only while a
-  particular page is open, using standard match patterns such as `https://*.youtube.com/*`.
-  On both Firefox and Chrome.
-- **Local search** over note titles and text, in the current tab or across all tabs.
-- **Backup.** Export everything to one readable JSON file; import it back by replacing or
-  merging; reset to a clean slate.
-- **Light, dark and system themes**, keyboard navigation throughout, and a layout that works
-  from a 320 px sidebar to a full window.
-
-## Screenshots
+- Any number of tabs, each with a name and a colour, reorderable, with a note count.
+- Any number of notes per tab, each with its own title and colour.
+- Rich text via Tiptap/ProseMirror: bold, italic, underline, strikethrough, headings 1-3,
+  bulleted, numbered and check lists, block quotes, inline code, code blocks, links, undo and
+  redo, clear formatting.
+- Autosave, debounced ~400 ms and flushed on note switch, blur, tab hide, unload and
+  Ctrl/Cmd+S.
+- [Pin to URL](#pin-to-url): a tab or a note can be set to appear only while a particular page
+  is open.
+- Search over note titles and text, in the current tab or across all of them.
+- Export everything to a JSON file, import it back by replacing or merging, or reset.
+- Light, dark and system themes, keyboard navigation, and a layout that works from a 320 px
+  sidebar to a full window.
 
 | Tab settings                                                                                                                                                                                                                                            | Note actions                                                                                                                                                             |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | <img src="docs/tab_settings.png" alt="Tab settings dialog: name field, a twelve-swatch color palette with the selected one check-marked, a custom color input, move left and right buttons, the tab's note count, and a Delete tab button" width="330"> | <img src="docs/note_settings.png" alt="Note actions menu: duplicate note, move up and move down greyed out for a single note, move to tab, and delete note" width="330"> |
 
-Selection is never signalled by color alone. The chosen swatch carries a check mark and the
-value is printed as text. Controls that cannot act are disabled rather than hidden.
+Colour is never the only signal: the chosen swatch carries a check mark and the value is
+printed as text. Controls that cannot act are disabled rather than hidden.
 
 ## Pin to URL
 

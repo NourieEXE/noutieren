@@ -1,18 +1,13 @@
 # Noutieren for Chrome
 
-The Chrome build of [Noutieren](../README.md). Firefox is the primary target; this
-directory holds only what Chrome needs differently.
+The Chrome build of [Noutieren](../README.md). Firefox is the main target, so this
+directory only holds what Chrome needs differently.
 
-**Published:
-[Noutieren on the Chrome Web Store](https://chromewebstore.google.com/detail/noutieren/fehabengonhjmgghempjpcgfkggppknf).**
-Everything below is for building it yourself; to just use it, that link is all you
-need.
-
-> **Verified in Chromium 150.** Loaded as an unpacked extension and driven over the
-> DevTools protocol: the manifest and CSP are accepted, the popup renders at the
-> size it declares, and text typed a moment before the popup is destroyed is still
-> there when it reopens. Re-run it any time with `npm run verify:chrome`. What that
-> does and does not cover is under [What has been verified](#what-has-been-verified).
+On the store as
+[Noutieren](https://chromewebstore.google.com/detail/noutieren/fehabengonhjmgghempjpcgfkggppknf).
+Everything below is about building it yourself. `npm run verify:chrome` runs it in
+a headless Chromium; see [What has been verified](#what-has-been-verified) for what
+that does and does not cover.
 
 ## There is only one copy of the source
 
@@ -80,7 +75,7 @@ is audited by the same script as Firefox: `node scripts/verify-build.mjs --targe
 
 ## Why a service worker writes your notes
 
-This is the one piece of real engineering in the port, so it is worth knowing about.
+This is the part of the port that needed actual thought.
 
 Autosave debounces for 400 ms. In a Firefox sidebar or any browser tab that is
 fine: `pagehide` fires, the pending patch is written, and the document survives
@@ -159,9 +154,9 @@ profile, and drives it over the DevTools protocol. Twenty-eight checks, all pass
 on Chromium 151:
 
 - The **manifest and CSP are accepted** and the service worker registers. This was
-  the biggest open question, since Chrome is stricter than Firefox about
+  the thing I was least sure about, since Chrome is stricter than Firefox about
   `content_security_policy.extension_pages`. The strict policy is taken as-is,
-  with no CSP violations reported at runtime.
+  with no CSP violations at runtime.
 - The popup **renders the app and its editor**, declares 800×600, and gets the
   two-pane layout (measured: `290px 509px`).
 - **No errors on startup.**
@@ -196,9 +191,9 @@ handoff is what saves the text, not a debounce that happened to fire in time.
 **What this cannot cover.** Headless Chromium has no browser UI, so the popup
 document is driven as a page with an 800×600 viewport. Chrome derives the real
 popup window size from the document's declared size, which _is_ verified, but the
-window it actually draws from the toolbar button deserves one human look, along
-with the usual things automation is bad at judging: theme switching, focus rings,
-and whether it feels right.
+window it actually draws from the toolbar button needs a look by hand, along with
+the usual things automation cannot judge: theme switching, focus rings, and
+whether it feels right.
 
 The **permission dialog** is browser UI too, so granting `tabs` and watching pins
 start working is a manual step. Everything around the prompt is checked; answering
