@@ -50,23 +50,16 @@ export function describeError(error: unknown): string {
 }
 
 /**
- * Notes a condition worth knowing about that is not a failure — a browser
- * declining something optional, rather than something going wrong.
+ * Notes a condition that is not a failure, such as a browser declining
+ * something optional.
  *
- * Logged at `debug`, deliberately, and not at `warn`.
- * `chrome://extensions` collects every `console.warn` and `console.error` into
- * a panel it labels **Errors**, so a line at `warn` level shows up there on
- * every single launch, in every context that boots the app, looking to the user
- * exactly like a fault. The most common such line — Chrome refusing persistent
- * storage, which is that browser's normal answer for an extension origin — is
- * precisely the thing this must not be mistaken for.
- *
- * It stays visible in DevTools (`debug` is shown under Verbose) and nothing is
- * lost from a real diagnosis.
+ * `debug` and not `warn` on purpose. `chrome://extensions` collects every
+ * `console.warn` and `console.error` into a panel labelled Errors, so a warning
+ * would appear there on every launch, in every context, looking like a fault.
+ * DevTools still shows `debug` under Verbose.
  */
 export function logWarning(context: string, message: string): void {
-  // eslint-disable-next-line no-console -- see above: `warn` would surface this
-  // in Chrome's extension Errors panel, where it does not belong.
+  // eslint-disable-next-line no-console -- see above
   console.debug(`[noutieren] ${context}: ${message}`);
 }
 

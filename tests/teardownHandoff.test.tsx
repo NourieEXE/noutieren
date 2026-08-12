@@ -7,7 +7,7 @@ import { render, screen, waitFor } from '@testing-library/react';
  * The distinction under test is not cosmetic. In a Firefox sidebar or a browser
  * tab, `pagehide` still allows an `await`, so autosave writes on the way out. A
  * Chrome toolbar popup is torn down the moment it loses focus and takes its
- * IndexedDB connection with it, so a write started there may never commit —
+ * IndexedDB connection with it, so a write started there may never commit.
  * which is why that build hands the queue to its service worker instead.
  *
  * Both paths have to be exercised through the real provider, because the bug
@@ -111,7 +111,7 @@ describe('with a handoff installed (Chrome)', () => {
     window.dispatchEvent(new Event('beforeunload'));
 
     // The snapshot empties the queue, so the second event finds nothing and the
-    // patch is never sent — or applied — twice.
+    // patch is never sent, or applied, twice.
     expect(handoff).toHaveBeenCalledTimes(1);
   });
 

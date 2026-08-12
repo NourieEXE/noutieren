@@ -2,9 +2,9 @@
 
 **Private, local-first notes in the Firefox sidebar, organized into color-labeled tabs.**
 
-Rich text, instant local search, and JSON backups — with no account, no sync, no telemetry,
-and no network requests of any kind. Two permissions at install: `storage` and
-`unlimitedStorage`, plus one optional permission you are only ever asked for if you use
+Rich text, instant local search, and JSON backups, with no account, no sync, no telemetry
+and no network requests of any kind. Two permissions at install, `storage` and
+`unlimitedStorage`, plus one optional permission you are only asked for if you use
 [Pin to URL](#pin-to-url).
 
 It lives in the sidebar, and opens in a full browser tab when you want more room.
@@ -29,11 +29,11 @@ It lives in the sidebar, and opens in a full browser tab when you want more room
 | **Status**     | Published on AMO and the Chrome Web Store; in daily use                                                                                                                                         |
 | **Requires**   | Firefox 142+ (desktop), or Chrome 111+                                                                                                                                                          |
 | **Built with** | React · TypeScript · Vite · Tiptap/ProseMirror · Dexie/IndexedDB                                                                                                                                |
-| **Tests**      | 315, plus typecheck, lint, a build audit and `web-ext lint`                                                                                                                                     |
+| **Tests**      | 343, plus typecheck, lint, a build audit and `web-ext lint`                                                                                                                                     |
 | **License**    | MIT                                                                                                                                                                                             |
-| **Privacy**    | No data collected — see [PRIVACY.md](PRIVACY.md)                                                                                                                                                |
+| **Privacy**    | No data collected, see [PRIVACY.md](PRIVACY.md)                                                                                                                                                 |
 | **Building**   | Reproducible build steps in [BUILDING.md](BUILDING.md)                                                                                                                                          |
-| **Chrome**     | Popup build — [store listing](https://chromewebstore.google.com/detail/noutieren/fehabengonhjmgghempjpcgfkggppknf), notes in [chrome_version/](chrome_version/README.md)                        |
+| **Chrome**     | Popup build, [store listing](https://chromewebstore.google.com/detail/noutieren/fehabengonhjmgghempjpcgfkggppknf), notes in [chrome_version/](chrome_version/README.md)                         |
 
 ### Quick start
 
@@ -87,78 +87,73 @@ Other install routes, including signing your own build for permanent installatio
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | <img src="docs/tab_settings.png" alt="Tab settings dialog: name field, a twelve-swatch color palette with the selected one check-marked, a custom color input, move left and right buttons, the tab's note count, and a Delete tab button" width="330"> | <img src="docs/note_settings.png" alt="Note actions menu: duplicate note, move up and move down greyed out for a single note, move to tab, and delete note" width="330"> |
 
-Selection is never signalled by color alone — the chosen swatch carries a check mark and the
+Selection is never signalled by color alone. The chosen swatch carries a check mark and the
 value is printed as text. Controls that cannot act are disabled rather than hidden.
 
 ## Pin to URL
 
-A tab, or one individual note, can be pinned so that it only appears while a matching page is
-open. Set it in **Tab settings → Pin to URL**, or **Note actions → Pin to URL…**.
+A tab, or a single note, can be set to appear only while a matching page is open. Set it in
+**Tab settings → Pin to URL**, or **Note actions → Pin to URL…**.
 
-Patterns use the standard
+Patterns use
 [WebExtension match-pattern](https://developer.mozilla.org/docs/Mozilla/Add-ons/WebExtensions/Match_patterns)
 syntax, `<scheme>://<host><path>`:
 
 | Pattern                                       | Matches                                     |
 | --------------------------------------------- | ------------------------------------------- |
-| `https://www.youtube.com/watch?v=eDQtUwad5vg` | that one video, and nothing else            |
+| `https://www.youtube.com/watch?v=eDQtUwad5vg` | that one video and nothing else             |
 | `https://www.youtube.com/`                    | the YouTube home page only                  |
 | `https://*.youtube.com/*`                     | all of YouTube, including `music.` and `m.` |
 | `https://example.com/docs/*`                  | anything under `/docs/`                     |
 | `*://example.com/*`                           | either scheme                               |
-| `youtube.com`                                 | shorthand — read as `*://youtube.com/`      |
+| `youtube.com`                                 | shorthand for `*://youtube.com/`            |
 
-**Nothing is ever widened for you.** What you type is what is stored:
-`https://www.youtube.com/` pins the home page and only the home page. To cover a whole site,
-either type the `*` yourself or tick **Also match everything under this address**, which shows
-you the exact pattern it will save before you add it. The field always prints the final
-string, so a pin can never come back broader than the one you entered.
+**Nothing is widened for you.** `https://www.youtube.com/` pins the home page and only the
+home page. To cover a whole site, type the `*` yourself or tick **Also match everything under
+this address**. The field prints the final pattern before you add it.
 
-Details worth knowing:
+Other things worth knowing:
 
-- A trailing `/` means the root path **only**; `/*` means everything on the host. This is the
-  difference between pinning to a site's home page and pinning to the whole site.
-- `*.example.com` matches `example.com` itself as well as its subdomains, and cannot be
-  satisfied by a lookalike such as `notexample.com`.
-- The query string is matched; the `#fragment` never is.
+- A trailing `/` means the root path only. `/*` means everything on the host.
+- `*.example.com` matches `example.com` as well as its subdomains, and cannot be satisfied by
+  a lookalike such as `notexample.com`.
+- The query string is matched, the `#fragment` never is.
 - Only `http` and `https` can be pinned, so a pin never matches `about:`, `file:` or the
   extension's own pages.
-- Only two things are filled in, because only one reading is possible: a missing scheme
-  (`example.com` → `*://example.com/`) and a missing path (`https://example.com` →
-  `https://example.com/`, as a browser would read the same text).
-- Multiple patterns act as "or" — the item shows if any one of them matches.
+- Two gaps get filled, because only one reading is possible: a missing scheme
+  (`example.com` becomes `*://example.com/`) and a missing path (`https://example.com` becomes
+  `https://example.com/`, as a browser reads the same text).
+- Multiple patterns act as "or".
 
-Pins **hide, they never delete**. Whenever a pin is hiding something, a pin button appears in
-the tab strip showing how many items are affected; one click reveals all of them. Pins also do
-not apply in the full-page view, which is itself a browser tab, so that is always a way back to
-everything.
+Pins hide, they never delete. When a pin is hiding something, a button appears in the tab
+strip with the count, and one click reveals everything. Pins also do not apply in the
+full-page view, which is a browser tab itself, so that is always a way back.
 
 ### The optional permission
 
 Matching against the current page means knowing its address, which needs the `tabs`
-permission. It is **optional and off by default**:
+permission. It is optional and off by default:
 
-- Not requested at install or on update — no existing install is disabled pending approval.
-- Saving a pin never prompts. Pins are data: they store fine and sit inert until the permission
-  is held, so nothing you type is thrown away and nothing is asked for before you have shown
-  you want the feature.
-- Once a pin exists, the editor says it is not active yet and offers **Enable Pin to URL**.
-  That button is the only thing that ever raises the prompt.
+- Not requested at install or on update, so no existing install is disabled pending approval.
+- Saving a pin never prompts. Pins are data, and they sit inert until the permission is held,
+  so nothing you type is thrown away.
+- Once a pin exists the editor says it is not active yet and offers **Enable Pin to URL**.
+  That button is the only thing that raises the prompt.
 - Clearing a pin never needs it.
-- Revoke it any time — **Add-ons → Noutieren → Permissions** on Firefox, **Details → Site
-  settings** on Chrome. Pins become inert, everything becomes visible, no notes are lost.
+- Revoke it any time: **Add-ons → Noutieren → Permissions** on Firefox, **Details → Site
+  settings** on Chrome. Pins go inert, everything becomes visible, no notes are lost.
 
-Pins **fail open, never closed**: without the permission, or when the address is unknown,
-everything is shown. Failing the other way would be indistinguishable from losing notes.
+Pins fail open. Without the permission, or when the address is unknown, everything is shown.
+Failing the other way would look like losing notes.
 
 The address is compared in memory and never stored, exported or transmitted. Noutieren still
-cannot read the _contents_ of any page. See [PRIVACY.md](PRIVACY.md) for the full statement.
+cannot read the contents of any page. See [PRIVACY.md](PRIVACY.md) for the full statement.
 
-**On Chrome the prompt appears in the full-page view.** Chrome destroys the toolbar popup the
-moment it loses focus, which is exactly what a permission dialog does — the popup would be gone
-before you could answer, so the request cannot merely fail there, it cannot be asked. **Enable
-Pin to URL** therefore opens the full page and asks there. Grant it, close the tab, and pins
-work in the popup from then on. Firefox's sidebar stays open, so it prompts in place.
+On Chrome the prompt appears in the full-page view. Chrome closes the toolbar popup as soon as
+it loses focus, which is what a permission dialog does, so the request cannot be answered
+there. **Enable Pin to URL** opens the full page and asks there instead. Grant it, close the
+tab, and pins work in the popup from then on. Firefox's sidebar stays open and prompts in
+place.
 
 ## Privacy
 
@@ -249,7 +244,7 @@ excluded and no development files are included.
 
 The published build is on
 [addons.mozilla.org](https://addons.mozilla.org/en-US/firefox/addon/noutieren-notes/) and
-installs like any other add-on — signed, auto-updating, nothing below required. This section
+installs like any other add-on: signed, auto-updating, nothing below required. This section
 is for installing a build **you** made.
 
 Firefox will not permanently install an unsigned extension in the release or beta channels.
@@ -265,7 +260,7 @@ To install your own build permanently you need one of:
 - **Or reload it as a temporary add-on** each session, as described above.
 
 The extension ID is `colornote-tabs@local.extension`. It keeps its pre-rename spelling
-deliberately — see _Renaming and identifiers_ below.
+deliberately. See _Renaming and identifiers_ below.
 
 ## Keyboard shortcuts
 
@@ -290,21 +285,21 @@ may open a browser window instead of a note. The **New note** button always work
 
 ## Data storage
 
-- **IndexedDB** (`colornote-tabs` database — see _Renaming and identifiers_) holds tabs, note metadata and rich-text
-  documents. Notes are split across two tables — `notes` for metadata and `contents` for
-  documents — so listing, previewing and searching never deserialise a single editor
+- **IndexedDB** (`colornote-tabs` database, see _Renaming and identifiers_) holds tabs, note metadata and rich-text
+  documents. Notes are split across two tables, `notes` for metadata and `contents` for
+  documents, so listing, previewing and searching never deserialise a single editor
   document. Indexes exist for notes by tab, notes by tab and position, notes by updated time,
   and tabs by position.
 - **URL pins** are stored as an optional `urlPatterns` array on the tab or note row itself.
-  It is unindexed — visibility is decided in memory over the tab list and the open tab's
-  notes, never by a range query — and absent rather than empty when an item is unpinned, so
+  It is unindexed, since visibility is decided in memory over the tab list and the open
+  tab's notes, and absent rather than empty when an item is unpinned, so
   every row written before 1.3.0 is already a correct unpinned row.
 - **`browser.storage.local`** holds only small UI preferences: selected tab and note,
   collapsed panel, theme, search scope, and whether the "show hidden" pin override is on.
 - `unlimitedStorage` is requested so notes are not capped by the default extension quota.
 - The schema is versioned (`SCHEMA_VERSION` in `src/database/db.ts`) with Dexie migrations, so
   future changes upgrade existing data instead of discarding it. To add one, append a new
-  `this.version(n)` block with an `.upgrade()` handler — never edit an existing block.
+  `this.version(n)` block with an `.upgrade()` handler, and never edit an existing block.
 
 Two open views (sidebar and full page) work on the same data and update live. Each save
 carries the version it was based on: if the other view wrote first, the save is refused and
@@ -320,10 +315,10 @@ does not check what a backup calls itself, so files exported under an older name
 Two values are **storage identities and must not be changed casually.** Both still read
 `colornote-tabs`, from before the extension was renamed to Noutieren:
 
-| Value                                           | Why it is frozen                                                                                                                                                   |
-| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `browser_specific_settings.gecko.id` (manifest) | Firefox maps the extension ID to the `moz-extension://` UUID that owns the database. A new ID means a new, empty origin — and AMO treats it as a brand-new add-on. |
-| `DATABASE_NAME` (`src/database/db.ts`)          | Names the IndexedDB database itself. Changing it opens a different, empty one.                                                                                     |
+| Value                                           | Why it is frozen                                                                                                                                                  |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `browser_specific_settings.gecko.id` (manifest) | Firefox maps the extension ID to the `moz-extension://` UUID that owns the database. A new ID means a new, empty origin, and AMO treats it as a brand-new add-on. |
+| `DATABASE_NAME` (`src/database/db.ts`)          | Names the IndexedDB database itself. Changing it opens a different, empty one.                                                                                    |
 
 Changing either makes every existing note appear to vanish. If one ever has to change, ship a
 migration that copies the old data across, or require users to export first and import after.
@@ -333,7 +328,7 @@ migration that copies the old data across, or require users to export first and 
 Any change to the packaged files invalidates the AMO signature, so shipping an update means:
 
 1. Edit the source.
-2. Bump `version` in `public/manifest.json` — AMO rejects a version number it has already seen.
+2. Bump `version` in `public/manifest.json`. AMO rejects a version it has already seen.
 3. `npm run check` (typecheck, lint, tests, build, extension lint).
 4. `npx web-ext sign --source-dir dist --channel=unlisted` with your API credentials in
    `WEB_EXT_API_KEY` / `WEB_EXT_API_SECRET`.
@@ -352,9 +347,9 @@ database. It checks ids, tab references, colors, positions, timestamps and edito
 rejects files it cannot read with a specific reason, and rebuilds every document from an
 allowlist so nothing in a file can become executable markup. Then you choose:
 
-- **Merge** — keeps your current notes and adds the imported ones, giving new ids to anything
+- **Merge** keeps your current notes and adds the imported ones, giving new ids to anything
   that would collide and repairing references so imported notes stay with their imported tabs.
-- **Replace** — deletes current data first. A safety backup of your existing data is
+- **Replace** deletes current data first. A safety backup of your existing data is
   downloaded automatically before anything is removed.
 
 **Reset** (settings menu → _Reset all data…_) deletes everything after an explicit
@@ -382,7 +377,7 @@ src/
   styles/                One stylesheet, custom properties, light/dark, container queries
   types/                 Shared types and the `browser`/`chrome` namespace declarations
   utils/                 Colors, ids, time, download, link URLs, URL match patterns
-chrome_version/          The Chrome delta only — see chrome_version/README.md
+chrome_version/          The Chrome delta only, see chrome_version/README.md
 tests/                   Vitest suites (fake-indexeddb + React Testing Library)
 ```
 
@@ -409,7 +404,7 @@ on note switch, and the guarantee that one note never receives another's content
 failures keeping typed text; conflict detection between views; search within one tab and
 across all tabs; export format; valid, invalid and merging imports; import sanitizing; reset;
 the v1→v2 database migration; selection restore; keyboard shortcuts; WCAG AA contrast for
-every palette color; and — for the Chrome build — namespace detection, popup view detection,
+every palette color; and for the Chrome build, namespace detection, popup view detection,
 message validation, and which teardown path runs on `pagehide`.
 
 `npm run check` builds the Chrome target too, so a change to shared code that breaks it fails
@@ -430,7 +425,7 @@ Load it at `chrome://extensions` → **Developer mode** → **Load unpacked** �
 `chrome_version/dist`.
 
 `verify:chrome` covers what jsdom cannot: that Chrome accepts the manifest and the strict
-CSP, that the popup renders at the size it declares, and — the one that matters — that text
+CSP, that the popup renders at the size it declares, and the one that matters, that text
 typed a moment before the popup is destroyed is still there when it reopens. Eighteen checks,
 all passing on Chromium 150.
 
@@ -438,11 +433,11 @@ Three things differ from Firefox:
 
 - **A popup instead of a sidebar.** Chrome has no equivalent sidebar API. The popup is
   800×600, Chrome's maximum, which is wide enough for the same two-pane layout a wide Firefox
-  sidebar gets — the container queries handle it, with no Chrome-specific CSS.
+  sidebar gets. The container queries handle it, with no Chrome-specific CSS.
 - **A service worker instead of an event page**, which is also what makes autosave safe:
   Chrome destroys a popup's document the instant it loses focus, so pending writes are handed
   to the worker rather than started in a document that is about to disappear.
-- **No Gecko manifest keys**, and so no shared extension id — meaning **notes do not move
+- **No Gecko manifest keys**, and so no shared extension id, meaning **notes do not move
   between Firefox and Chrome.** Use export and import.
 
 The full account, including what to check on first load and the extension-id trap to avoid
@@ -451,7 +446,7 @@ before publishing, is in [`chrome_version/README.md`](chrome_version/README.md).
 ## Known limitations
 
 - **`web-ext lint` reports four `UNSAFE_VAR_ASSIGNMENT` warnings** (0 errors). All four are
-  `innerHTML` assignments inside bundled React and ProseMirror code — React's
+  `innerHTML` assignments inside bundled React and ProseMirror code: React's
   `dangerouslySetInnerHTML` support, its `<script>` element creation path, ProseMirror's
   clipboard serialiser, and Tiptap's stylesheet injector. The last one never executes: the
   editor is created with `injectCSS: false` and those rules ship as static CSS instead. The
@@ -467,7 +462,7 @@ before publishing, is in [`chrome_version/README.md`](chrome_version/README.md).
   purpose; only the theme follows across views.
 - **`Ctrl+N` may be intercepted by Firefox** before the extension sees it, depending on
   platform and focus.
-- **Firefox for Android is not supported** — it has no extension sidebar.
+- **Firefox for Android is not supported**, since it has no extension sidebar.
 - **The bundle is a single ~750 KiB file** (~235 KiB gzipped): React, ProseMirror and Dexie.
   Code splitting would add nothing, since everything loads from local files.
 

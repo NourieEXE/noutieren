@@ -132,7 +132,7 @@ body {
 /*
  * Chrome's toolbar popup has no viewport of its own to fill: the browser
  * measures the document and sizes the window to match, capped at 800×600. So
- * `height: 100%` resolves against nothing and the popup collapses — this view is
+ * `height: 100%` resolves against nothing and the popup collapses. This view is
  * the one place that needs explicit pixels.
  *
  * 800 px also clears the 700 px container query below, which is what puts the
@@ -1427,7 +1427,7 @@ kbd {
 }
 
 /*
- * Used where something is saved but not yet doing anything — inert URL pins
+ * Used where something is saved but not yet doing anything, such as inert pins
  * waiting on the optional permission. Deliberately not `--error`: nothing has
  * gone wrong, and colouring it as a failure would suggest the pin was lost.
  */

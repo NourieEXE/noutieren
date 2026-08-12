@@ -18,7 +18,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 /**
  * Both targets get the same artwork. Each build only copies its own `public/`
- * directory, so the icons are written twice rather than shared — they are a few
+ * directory, so the icons are written twice rather than shared, since they are a few
  * kilobytes, and the alternative is a copy step in two Vite configs.
  */
 const OUT_DIRS = [join(ROOT, 'public', 'icons'), join(ROOT, 'chrome_version', 'public', 'icons')];

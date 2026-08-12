@@ -12,7 +12,7 @@ const here = fileURLToPath(new URL('.', import.meta.url));
  * service is imported from `../src`. There is no second copy of the
  * application: this directory holds only what Chrome needs differently.
  *
- * Two HTML entries, both loading the same script — `popup.html` for the toolbar
+ * Two HTML entries, both loading the same script: `popup.html` for the toolbar
  * popup and `index.html` for the full-page tab, which the shared
  * `openFullPageEditor` opens as `index.html?view=page`.
  *
@@ -34,7 +34,7 @@ export default defineConfig({
     emptyOutDir: true,
     sourcemap: false,
     // Matches `minimum_chrome_version` in the manifest, which is set by the
-    // oldest Chrome supporting `color-mix()` — see chrome_version/README.md.
+    // oldest Chrome supporting `color-mix()`. See chrome_version/README.md.
     target: 'chrome111',
     assetsInlineLimit: 0,
     chunkSizeWarningLimit: 1000,

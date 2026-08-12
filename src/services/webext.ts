@@ -5,8 +5,8 @@ import type * as WebExtension from 'webextension-polyfill';
  *
  * Firefox provides a native promise-based `browser` namespace on extension
  * pages. Chrome provides `chrome`, which under MV3 returns promises from every
- * API touched here — `storage.local`, `tabs.create` and the synchronous
- * `runtime.getURL` — so one shape describes both and `webextension-polyfill` is
+ * API touched here (`storage.local`, `tabs.create` and the synchronous
+ * `runtime.getURL`), so one shape describes both and `webextension-polyfill` is
  * used for its type definitions only. No polyfill code ships in either build.
  *
  * Everything degrades to a no-op (or a plain `window.open`) outside an
@@ -19,7 +19,7 @@ export function getBrowserApi(): BrowserApi | null {
   if (typeof browser !== 'undefined' && browser) return browser;
   // Ordinary web pages in Chrome also carry a `chrome` object, which is not the
   // extension API. `runtime.id` exists only in an extension context, so it is
-  // what distinguishes the two — without this check `vite dev` in Chrome would
+  // what distinguishes the two. Without this check `vite dev` in Chrome would
   // believe it had storage APIs and silently lose every preference write.
   if (typeof chrome !== 'undefined' && chrome && typeof chrome.runtime?.id === 'string') {
     return chrome;
@@ -42,8 +42,8 @@ export const FULL_PAGE_URL = 'index.html?view=page';
 /**
  * Marks a full-page tab opened to grant the `tabs` permission.
  *
- * Chrome's toolbar popup cannot raise a permission dialog — see
- * `canPromptForPermission` — so it sends the user here. Without this flag the
+ * Chrome's toolbar popup cannot raise a permission dialog (see
+ * `canPromptForPermission`), so it sends the user here. Without this flag the
  * tab would open on the ordinary editor with nothing to explain why, which is
  * exactly what it looked like the first time round.
  */
@@ -60,7 +60,7 @@ export function wantsPinPermissionGrant(search: string = window.location.search)
  *
  * Always creates a tab rather than looking for an existing one: filtering
  * `tabs.query` by URL needs the `tabs` permission, which is optional and
- * usually absent, and without it the filter can be ignored — which would mean
+ * usually absent, and without it the filter can be ignored, which would mean
  * activating an unrelated tab. `tabs.create` needs no permission at all.
  */
 export async function openFullPageEditor({ forPinGrant = false } = {}): Promise<void> {
@@ -79,7 +79,7 @@ export async function openFullPageEditor({ forPinGrant = false } = {}): Promise<
 /**
  * Which surface the app is rendering in.
  *
- * Only used for things genuinely tied to the surface — whether to offer "Full
+ * Only used for things genuinely tied to the surface: whether to offer "Full
  * page", and the fixed size a Chrome popup has to declare. The layout itself is
  * chosen by a CSS container query on width, so a 800 px popup and a 800 px
  * sidebar look the same.

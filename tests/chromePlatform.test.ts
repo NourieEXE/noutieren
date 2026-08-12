@@ -185,7 +185,7 @@ describe('flush message', () => {
 
   it('declines messages that are not a handoff', () => {
     // `null` means "not mine", which the worker must not confuse with an empty
-    // batch — one declines the message, the other answers it.
+    // batch: one declines the message, the other answers it.
     expect(parseFlushPending({ type: 'something/else', writes: [] })).toBeNull();
     expect(parseFlushPending(undefined)).toBeNull();
     expect(parseFlushPending('flush')).toBeNull();

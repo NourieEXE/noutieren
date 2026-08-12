@@ -3,7 +3,7 @@
  * Captures the Chrome Web Store screenshots from the real running extension.
  *
  * The store requires images at exactly 1280x800, but a Chrome popup is only
- * 800x600 — so the popup is photographed at its true size and composited into a
+ * 800x600, so the popup is photographed at its true size and composited into a
  * mock browser window, anchored under a lit toolbar icon. That is what clicking
  * the button actually looks like, and it fills the frame without stretching the
  * interface or faking a single pixel of it.

@@ -14,7 +14,7 @@ import { EditorToolbar } from './EditorToolbar';
  * instance flushes its own note on unmount, and the incoming one is created
  * with its own content.
  *
- * Callbacks are held in refs so the editor is created exactly once per mount —
+ * Callbacks are held in refs so the editor is created exactly once per mount,
  * a re-created editor would lose the cursor and the undo stack.
  */
 export function RichTextEditor({

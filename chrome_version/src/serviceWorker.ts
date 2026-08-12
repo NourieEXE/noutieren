@@ -10,7 +10,7 @@ import { parseFlushPending, type FlushPendingResult } from './messages';
  * It exists for one reason: to finish writes a popup could not. Chrome destroys
  * a popup's document the moment it loses focus, taking any open IndexedDB
  * transaction with it, so the popup hands its queue here on the way out and this
- * worker — a separate context with its own connection to the same database —
+ * worker, a separate context with its own connection to the same database,
  * performs the write.
  *
  * There is no toolbar-click listener, unlike the Firefox build: `default_popup`
@@ -54,8 +54,8 @@ export async function applyHandedOffWrites(
  * The real contract for a three-argument message listener: return `true` to
  * claim the message and reply later, or nothing to decline it.
  *
- * `webextension-polyfill` types only the claiming half — its
- * `OnMessageListenerCallback` returns exactly `true` — so declining needs a cast
+ * `webextension-polyfill` types only the claiming half: its
+ * `OnMessageListenerCallback` returns exactly `true`, so declining needs a cast
  * at the registration site below. This alias is the signature that is actually
  * being honoured, which is why the handler is written against it rather than
  * against the library type.

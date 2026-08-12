@@ -16,12 +16,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-/**
- * The stub installed by `stubBrowser`, typed for inspection.
- *
- * `chrome` is declared globally as the real `Browser` shape, so reaching its
- * vitest mocks needs a cast; doing it here keeps the assertions readable.
- */
+/** `chrome` is typed as the real Browser shape, so the mocks need a cast. */
 function stubbed<T>(): T {
   return chrome as unknown as T;
 }
@@ -49,12 +44,8 @@ function stubBrowser(overrides: Record<string, unknown> = {}): void {
 }
 
 describe('which surfaces can raise the permission dialog', () => {
-  /*
-   * The reason this exists at all: Chrome destroys the toolbar popup when it
-   * loses focus, which is precisely what opening a permission dialog does. The
-   * request cannot fail gracefully there — the document is gone before the user
-   * answers — so the popup must not try.
-   */
+  // Chrome destroys the popup when it loses focus, which is what the dialog
+  // does, so the request cannot fail gracefully there.
   it('refuses to prompt from a toolbar popup', () => {
     expect(canPromptForPermission('popup')).toBe(false);
   });
@@ -69,11 +60,6 @@ describe('which surfaces can raise the permission dialog', () => {
 });
 
 describe('the full-page grant hand-off', () => {
-  /*
-   * What went wrong the first time this shipped: the popup opened the full page
-   * with no flag, so the tab arrived on the ordinary editor, asked for nothing,
-   * and looked like it had opened at random.
-   */
   it('marks a tab opened to ask for the permission', () => {
     expect(wantsPinPermissionGrant('?view=page&grant=pins')).toBe(true);
   });

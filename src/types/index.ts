@@ -6,7 +6,7 @@ export type { JSONContent };
  * A "Pin to URL" rule: match patterns that decide when an item is shown.
  *
  * Absent or empty means the item is not pinned and is therefore always visible.
- * That is why the field is optional rather than defaulted to `[]` — every row
+ * That is why the field is optional rather than defaulted to `[]`: every row
  * written before 1.3.0 is correctly unpinned without a data migration.
  *
  * The patterns themselves are parsed by `utils/matchPattern`.
@@ -50,7 +50,7 @@ export interface NoteContentRow {
   content: JSONContent;
 }
 
-/** A note with its document attached — the shape used by export/import. */
+/** A note with its document attached, the shape used by export and import. */
 export interface Note extends NoteMeta {
   content: JSONContent;
 }

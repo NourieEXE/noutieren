@@ -7,7 +7,7 @@ import { FLUSH_PENDING, type FlushPendingMessage } from './messages';
  * destroyed.
  *
  * `sendMessage` hands the payload to the browser process synchronously, so
- * delivery stops depending on this page a moment later — which is the entire
+ * delivery stops depending on this page a moment later, which is the entire
  * point. Everything after that (waking the worker, opening IndexedDB, writing)
  * happens somewhere that is not about to be collected.
  *
@@ -31,7 +31,7 @@ export function handOffToServiceWorker(writes: readonly PendingWrite[]): void {
       () => undefined,
     );
   } catch (error) {
-    // Nothing left to recover with — but a synchronous throw here would abort
+    // Nothing left to recover with, but a synchronous throw here would abort
     // the rest of the teardown handlers, so it stops at this boundary.
     logError('teardownHandoff', error);
   }

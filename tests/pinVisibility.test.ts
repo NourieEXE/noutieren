@@ -131,12 +131,8 @@ describe('filtering the workspace', () => {
     expect(result.hiddenNoteCount).toBe(1);
   });
 
-  /*
-   * Regression. An earlier version exempted the *selected* note, which meant a
-   * note pinned while you were reading it stayed selected, stayed exempt, and
-   * so never hid — the feature did nothing for the most obvious way to use it.
-   * Only an explicit reveal exempts anything now.
-   */
+  // Regression: exempting the selected note meant a note pinned while you were
+  // reading it never hid. Only an explicit reveal exempts anything.
   it('hides a pinned note even while it is the one selected', () => {
     const notes = [note('plain'), note('gh', ['gh.test/*'])];
     const result = selectVisible([], notes, null, null, context());

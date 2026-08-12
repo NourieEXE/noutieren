@@ -35,7 +35,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
  * type it is supposed to.
  *
  * `applyNotePatch` writes `plainText`, `tabId` and `position` through to storage
- * untouched, so a wrong type here would become a corrupt row — a string
+ * untouched, so a wrong type here would become a corrupt row: a string
  * `position` is enough to scramble the order of a tab. Titles and colours are
  * normalized downstream, so a type check is all they need here.
  */
@@ -58,7 +58,7 @@ function sanitizePatch(source: Record<string, unknown>): NotePatch {
 /**
  * Validates an incoming message.
  *
- * Returns `null` when this is not a flush message at all — which the listener
+ * Returns `null` when this is not a flush message at all, which the listener
  * must distinguish from an empty one, so it can decline to answer messages that
  * are none of its business. Individual malformed entries are dropped rather than
  * failing the batch: losing one note's last keystrokes beats losing every
@@ -83,7 +83,7 @@ export function parseFlushPending(message: unknown): PendingWrite[] | null {
       noteId: entry.noteId,
       patch,
       // A missing or malformed base version becomes `null`, which
-      // `applyNotePatch` reads as "do not check" — correct here, because the
+      // `applyNotePatch` reads as "do not check", which is correct here because the
       // page that could have resolved a conflict no longer exists.
       expectedUpdatedAt:
         typeof entry.expectedUpdatedAt === 'number' && Number.isFinite(entry.expectedUpdatedAt)

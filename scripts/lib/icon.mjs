@@ -1,8 +1,8 @@
 /**
  * Icon artwork: the drawing and PNG encoding shared by the icon scripts.
  *
- * The artwork is three stacked, left-aligned colored bars — a list of
- * color-labeled notes — drawn on a 128x128 design grid, rendered 4x
+ * The artwork is three stacked, left-aligned colored bars, a list of
+ * color-labeled notes, drawn on a 128x128 design grid, rendered 4x
  * supersampled and box-downsampled for antialiasing, then encoded as an 8-bit
  * RGBA PNG using only Node's built-in zlib. No network, no image library.
  *
@@ -82,7 +82,7 @@ function fillRoundRect(canvas, w, h, rect, color, alpha, to) {
  * Places the bars on the design grid.
  *
  * Without a tile they use the full grid, which leaves the artwork spanning about
- * 94x96 of 128 — close to the padding both stores recommend. With a tile the
+ * 94x96 of 128, close to the padding both stores recommend. With a tile the
  * whole arrangement is scaled into the tile's inset so the bars never touch its
  * edge.
  */

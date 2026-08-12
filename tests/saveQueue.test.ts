@@ -142,7 +142,7 @@ describe('note isolation', () => {
 
     // 1. Type in note A.
     queue.schedule(a.id, { content: doc('A first'), plainText: 'A first' });
-    // 2. Immediately select note B — the provider flushes the note being left.
+    // 2. Immediately select note B, so the provider flushes the note being left.
     await queue.flush(a.id);
     // 3. Type in note B.
     queue.schedule(b.id, { content: doc('B typing'), plainText: 'B typing' });

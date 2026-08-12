@@ -231,7 +231,7 @@ function EmptyNotesState({
         <p className="empty-state__hint">
           {scope === 'tab'
             ? 'Try “All tabs” to search everywhere.'
-            : 'Try a shorter word — search matches note titles and text.'}
+            : 'Try a shorter word. Search matches note titles and text.'}
         </p>
       </div>
     );

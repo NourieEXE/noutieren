@@ -15,7 +15,7 @@ declare global {
    * there either.
    *
    * Also possibly undefined, and note that an ordinary web page in Chrome
-   * carries an unrelated object under this name — which is why `getBrowserApi`
+   * carries an unrelated object under this name, which is why `getBrowserApi`
    * checks `runtime.id` rather than mere existence.
    */
   const chrome: WebExtension.Browser | undefined;

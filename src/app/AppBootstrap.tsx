@@ -32,13 +32,9 @@ export function AppBootstrap() {
         // Ask for eviction-exempt storage before the user writes anything.
         // Failure is not fatal: notes still save, they are just evictable.
         void ensurePersistentStorage().then((state) => {
-          // Chrome always answers `denied` for extension origins, so this is a
-          // normal condition there rather than a fault — `unlimitedStorage`
-          // governs eviction instead. Logged at `debug` (see `logWarning`) so
-          // it does not land in Chrome's extension "Errors" panel, which
-          // collects `console.warn` and would show this on every launch, in
-          // every context, as though something had gone wrong. The `error`
-          // state has already been logged with its cause by the service itself.
+          // Chrome always answers `denied` for extension origins, where
+          // `unlimitedStorage` governs eviction instead, so this is normal
+          // there. The `error` state is logged with its cause by the service.
           if (state === 'denied' || state === 'unsupported') {
             logWarning(
               'storage durability',

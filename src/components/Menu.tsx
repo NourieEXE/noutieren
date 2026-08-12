@@ -29,7 +29,7 @@ export function Menu({
   const close = useCallback(() => setOpen(false), []);
 
   /*
-   * Return focus to the trigger when the menu closes — but only if focus was
+   * Return focus to the trigger when the menu closes, but only if focus was
    * still inside the menu (Escape, or choosing an item). Closing by clicking
    * elsewhere must leave focus where the user put it.
    */

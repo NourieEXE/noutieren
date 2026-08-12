@@ -7,7 +7,7 @@
  * no zip writer, and `web-ext` builds for Firefox.
  *
  * Every entry is stored with a fixed 1980-01-01 timestamp, so packaging the same
- * `dist/` twice produces byte-identical archives — the property BUILDING.md
+ * `dist/` twice produces byte-identical archives, the property BUILDING.md
  * relies on to let anyone reproduce a published package.
  */
 import { deflateRawSync } from 'node:zlib';

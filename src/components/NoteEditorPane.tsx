@@ -51,7 +51,7 @@ export function NoteEditorPane() {
         <div className="empty-state">
           <p className="empty-state__title">No note selected.</p>
           <p className="empty-state__hint">
-            Create a note to start writing — it saves automatically as you type.
+            Create a note to start writing. It saves automatically as you type.
           </p>
           <button
             type="button"

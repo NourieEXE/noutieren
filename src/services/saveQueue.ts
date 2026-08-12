@@ -113,14 +113,14 @@ export class SaveQueue {
    * debounce timers.
    *
    * For surfaces that are destroyed without warning, where beginning an async
-   * write would be pointless: the document — and with it the IndexedDB
-   * connection the transaction belongs to — is about to disappear. The caller
+   * write would be pointless: the document, and with it the IndexedDB connection
+   * the transaction belongs to, is about to disappear. The caller
    * takes ownership of persisting what it receives; see `services/teardown`.
    *
    * Writes already in flight are deliberately left behind. They have started,
    * they may well still land, and handing out a second copy would race the one
    * that is running. Since a patch sits in `pending` for at most one debounce
-   * window, what this returns is everything typed in the last ~400 ms — exactly
+   * window, what this returns is everything typed in the last ~400 ms, exactly
    * the part that has had no chance to reach storage yet.
    */
   takePendingSnapshot(): PendingWrite[] {
@@ -264,7 +264,7 @@ export class SaveQueue {
           listener({ noteId, currentUpdatedAt: result.currentUpdatedAt });
         }
       }
-      // 'missing' means the note was deleted — dropping the patch is correct.
+      // 'missing' means the note was deleted, so dropping the patch is correct.
     } catch (error) {
       logError('saveQueue.write', error);
       // Put the text back. A newer queued patch for the same fields wins, and

@@ -9,7 +9,7 @@ import { describeError, logError } from '../services/errors';
  * Exports every tab and note to a JSON file.
  *
  * Shared by the settings menu and the staleness reminder so both record the
- * backup timestamp — a reminder that did not count as a backup would nag
+ * backup timestamp, since a reminder that did not count as a backup would nag
  * forever.
  */
 export function useExportBackup(): () => Promise<void> {

@@ -281,7 +281,7 @@ export function parseBackup(text: string): ParsedBackup {
       title: normalizeText(record.title, 'Untitled note'),
       color: normalizeColor(record.color, DEFAULT_NOTE_COLOR),
       ...(notePins.length > 0 ? { urlPatterns: notePins } : {}),
-      // Regenerated from the sanitized document — never trusted from the file,
+      // Regenerated from the sanitized document, never trusted from the file,
       // so search can't be poisoned with text the note does not contain.
       plainText: extractPlainText(content),
       position: normalizePositionValue(record.position, index),

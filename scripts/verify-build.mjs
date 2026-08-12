@@ -8,7 +8,7 @@
  *
  * Usage: `node scripts/verify-build.mjs [--target=firefox|chrome]`
  *
- * The self-containment rules are identical for both targets — that is the point
+ * The self-containment rules are identical for both targets, which is the point
  * of them. Only the manifest expectations differ, because the two browsers
  * disagree about how an extension presents itself and how background code runs.
  */
@@ -92,7 +92,7 @@ if (manifest) {
       fail('manifest must declare data_collection_permissions.required = ["none"].');
     }
   } else {
-    // Chrome has no sidebar API, so the toolbar click must open the popup —
+    // Chrome has no sidebar API, so the toolbar click must open the popup,
     // the exact opposite of the Firefox requirement above.
     if (!manifest.action?.default_popup) fail('manifest is missing action.default_popup.');
     if (manifest.sidebar_action)
@@ -113,18 +113,9 @@ if (manifest) {
   if (/unsafe-eval|unsafe-inline/.test(csp))
     fail('extension_pages CSP must not allow unsafe-eval or unsafe-inline.');
 
-  /*
-   * Permissions.
-   *
-   * The required list is the one users are shown at install time, and it stays
-   * at exactly two. `tabs` — which "Pin to URL" needs to read the address of
-   * the active tab — is *optional*: it is requested at runtime, from a click,
-   * only when someone saves their first pin. Keeping it out of the required
-   * list is what means no existing install is disabled pending approval on
-   * update, and that anyone who never uses pins is never asked for anything.
-   *
-   * Moving `tabs` into `permissions` should fail this check, not pass it.
-   */
+  // The required list is what users see at install and stays at exactly two.
+  // `tabs` is optional and requested at runtime, so moving it into
+  // `permissions` must fail this check rather than pass it.
   const permissions = manifest.permissions ?? [];
   const allowed = new Set(['storage', 'unlimitedStorage']);
   for (const permission of permissions) {
@@ -215,7 +206,7 @@ for (const file of files) {
 
   for (const { pattern, message } of REMOTE_PATTERNS) {
     if (pattern.test(source))
-      fail(`${rel(file)} contains ${message} — the build must be self-contained.`);
+      fail(`${rel(file)} contains ${message}. The build must be self-contained.`);
   }
   if (ext === '.js') {
     for (const { pattern, message } of DYNAMIC_CODE_PATTERNS) {
@@ -234,7 +225,7 @@ for (const file of files) {
 const totalBytes = files.reduce((sum, file) => sum + statSync(file).size, 0);
 notes.push(`${files.length} files, ${(totalBytes / 1024).toFixed(0)} KiB unpacked.`);
 
-console.log(`\nBuild verification — ${TARGETS[target].label} (${DIST_LABEL})`);
+console.log(`\nBuild verification: ${TARGETS[target].label} (${DIST_LABEL})`);
 console.log('-'.repeat(40));
 for (const note of notes) console.log(`  ok      ${note}`);
 for (const warning of warnings) console.log(`  warn    ${warning}`);

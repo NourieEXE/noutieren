@@ -150,8 +150,8 @@ export function TabStrip({ notesPanelId }: { notesPanelId: string | undefined })
             }
             title={
               pinStatus.showHidden
-                ? 'Showing everything — click to apply URL pins again'
-                : `${hiddenCount} hidden by a URL pin — click to show`
+                ? 'Showing everything. Click to apply URL pins again'
+                : `${hiddenCount} hidden by a URL pin. Click to show`
             }
           >
             <Icon name={pinStatus.showHidden ? 'pinOff' : 'pin'} />

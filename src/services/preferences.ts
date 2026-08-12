@@ -66,7 +66,7 @@ let fallbackStorage: FallbackStorage | null = null;
  * Resolves the storage used when the extension APIs are absent (`vite dev` and
  * unit tests).
  *
- * `localStorage` is probed rather than assumed: it can be present but unusable —
+ * `localStorage` is probed rather than assumed: it can be present but unusable:
  * blocked by browser settings, or an accessor that yields nothing, as in jsdom.
  * An in-memory store is used in that case so writes are never silently dropped.
  */
@@ -143,9 +143,9 @@ export async function savePreferences(
 /**
  * Observes preference changes made by another view.
  *
- * Selection is intentionally *not* mirrored between views — two editors should
- * be able to sit on different notes — so callers apply only the fields they
- * want to follow (the theme, in practice).
+ * Selection is intentionally *not* mirrored between views, since two editors
+ * should be able to sit on different notes. Callers apply only the fields they
+ * want to follow, which in practice is the theme.
  */
 export function subscribeToPreferences(listener: (next: AppPreferences) => void): () => void {
   const api = getBrowserApi();

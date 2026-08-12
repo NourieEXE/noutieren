@@ -9,7 +9,7 @@ import userEvent from '@testing-library/user-event';
  *
  * The rich-text editor is replaced with a textarea that calls the same
  * `onChange`/`onFlush` contract. That keeps the test about the wiring under
- * test — selection, the autosave queue and the database — rather than about
+ * test (selection, the autosave queue and the database) rather than about
  * ProseMirror's behaviour inside jsdom.
  */
 vi.mock('../src/editor/RichTextEditor', () => ({
@@ -109,7 +109,7 @@ describe('switching notes while typing', () => {
     // 2. Immediately switch to note B and type there.
     await user.click(noteRow('Note B'));
     await waitFor(() => expect(editor()).toHaveAttribute('data-note-id', b.id));
-    // B starts empty — A's text must not have leaked into this editor.
+    // B starts empty, so A's text must not have leaked into this editor.
     expect(editor()).toHaveValue('');
     await user.type(editor(), 'beta content');
 

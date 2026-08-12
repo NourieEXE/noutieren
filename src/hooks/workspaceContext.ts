@@ -13,7 +13,7 @@ export interface WorkspaceActions {
    *
    * Always saves. A pin is data, and it is inert but harmless without the
    * `tabs` permission, so refusing to store one would throw away what the user
-   * typed to no benefit — they would have to type it again after granting.
+   * typed to no benefit, since they would have to type it again after granting.
    * Whether it is *active* is `pinStatus.granted`, reported separately.
    */
   pinTab: (id: string, patterns: string[]) => Promise<void>;
@@ -23,8 +23,8 @@ export interface WorkspaceActions {
   /**
    * Asks for the permission that makes pins take effect.
    *
-   * `'elsewhere'` means this surface cannot raise the dialog — Chrome's toolbar
-   * popup — and the full-page view has been opened to ask there instead.
+   * `'elsewhere'` means this surface cannot raise the dialog (Chrome's toolbar
+   * popup) and the full-page view has been opened to ask there instead.
    */
   requestPinPermission: () => Promise<'granted' | 'denied' | 'elsewhere'>;
 
@@ -66,7 +66,7 @@ export interface WorkspaceApi {
   /** Notes in the selected tab, after pins have been applied. */
   notes: readonly NoteMeta[];
   /** Every tab, ignoring pins. Used where hiding would be wrong, such as
-   * "Move note to tab…" — a pin must never make a tab unreachable. */
+   * "Move note to tab…", since a pin must never make a tab unreachable. */
   allTabs: readonly NoteTab[];
   noteCounts: Readonly<Record<string, number>>;
   totalNoteCount: number;

@@ -59,7 +59,7 @@ describe('first run', () => {
     expect(rows).toHaveLength(1);
 
     // The seeded note is selected by an effect that runs after the live query
-    // delivers it, a tick later than the list itself — so this has to be waited
+    // delivers it, a tick later than the list itself, so this has to be waited
     // for rather than read straight after render.
     await waitFor(() =>
       expect(within(rows[0]).getByRole('button')).toHaveAttribute('aria-current', 'true'),

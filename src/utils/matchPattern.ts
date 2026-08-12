@@ -1,92 +1,55 @@
 /**
- * URL match patterns, used by "Pin to URL" to decide whether a tab or a note is
- * visible for the page currently in the browser.
+ * URL match patterns for "Pin to URL".
  *
- * The syntax is the WebExtension match pattern:
+ * Syntax is the WebExtension match pattern: `<scheme>://<host><path>`.
+ * Pure string matching, no browser access.
  *
- *     <scheme>://<host><path>
+ * A wildcard is never added for the user. `https://example.com/` pins the root
+ * only; `https://example.com/*` covers the site. The two gaps that get filled
+ * are unambiguous: a missing scheme becomes `*://`, and a missing path becomes
+ * `/`. Widening is `widenToPrefix`, called from the editor.
  *
- * It is reused rather than invented because it is documented, widely known, and
- * already answers the awkward questions — what `*.example.com` does about the
- * apex domain, whether a trailing slash means "the root only". Nothing here
- * talks to the browser: this module is a pure string matcher, which is what
- * makes the behaviour testable without a tab open.
- *
- * **A wildcard is never added on your behalf.** What you type is what is
- * stored: `https://example.com/` pins the home page and nothing else, and only
- * `https://example.com/*` covers the whole site. An earlier version quietly
- * completed a missing path to `/*`, which meant a pattern could come back
- * broader than the one that was entered — the editor now offers an explicit
- * "everything under this address" option instead, so widening is always a
- * choice someone made.
- *
- * The two things still filled in are unambiguous, because there is only one
- * thing they could mean:
- *
- * - A missing scheme: `example.com` is read as `*://example.com/`.
- * - A missing path: `https://example.com` is read as `https://example.com/`,
- *   which is what a browser does with the same text.
- *
- * Matching follows the specification: scheme and host are compared
- * case-insensitively, the path case-sensitively, and the fragment is never
- * considered.
+ * Scheme and host compare case-insensitively, the path case-sensitively, and
+ * the fragment is never matched.
  */
 
-/** Schemes a pin may target. `*` means http or https, as in the specification. */
 const CONCRETE_SCHEMES = ['http', 'https'] as const;
 
 type ConcreteScheme = (typeof CONCRETE_SCHEMES)[number];
 
 export interface MatchPattern {
-  /** The normalized source text, which is what gets stored. */
+  /** Normalized text, which is what gets stored. */
   readonly source: string;
   /** `null` for `*`, meaning http and https both. */
   readonly scheme: ConcreteScheme | null;
   /** `null` for `*`, meaning any host. Lowercased, no leading `*.`. */
   readonly host: string | null;
-  /** True for `*.example.com`, which also matches `example.com` itself. */
+  /** True for `*.example.com`, which also matches `example.com`. */
   readonly matchSubdomains: boolean;
-  /** Compiled from the path glob; tested against pathname + search. */
+  /** Tested against pathname + search. */
   readonly path: RegExp;
 }
 
-/** Matches every http(s) URL. Accepted as a convenience, as in the manifest. */
 export const ALL_URLS = '<all_urls>';
 
-/** A pin's pattern list is capped so one tab cannot carry unbounded storage. */
 export const MAX_PATTERNS_PER_PIN = 20;
 
 const MAX_PATTERN_LENGTH = 2048;
 
-/**
- * Wildcards allowed in one path.
- *
- * Each `*` becomes `.*`, and a chain of them backtracks super-linearly against a
- * long non-matching URL. Ten is far past any real pin and keeps the worst case
- * uninteresting.
- */
+/** Each `*` becomes `.*`, and a long chain backtracks badly. */
 const MAX_PATH_WILDCARDS = 10;
 
-/**
- * Parses a match pattern, returning `null` if it cannot be understood.
- *
- * Callers that need to explain the failure to a user should use `parsePattern`
- * instead, which reports the same decision with a reason.
- */
+const HOST_PATTERN = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/;
+
+export type PatternParseResult =
+  { ok: true; pattern: MatchPattern } | { ok: false; reason: string };
+
 export function parseMatchPattern(input: unknown): MatchPattern | null {
   const result = parsePattern(input);
   return result.ok ? result.pattern : null;
 }
 
-export type PatternParseResult =
-  { ok: true; pattern: MatchPattern } | { ok: false; reason: string };
-
-/**
- * Parses a pattern, explaining any rejection in terms a user can act on.
- *
- * The messages name the offending part rather than restating the grammar: the
- * field this feeds shows one line under an input, not documentation.
- */
+/** Parses a pattern, naming the offending part when it fails. */
 export function parsePattern(input: unknown): PatternParseResult {
   if (typeof input !== 'string') return { ok: false, reason: 'Enter a URL pattern.' };
 
@@ -108,9 +71,8 @@ export function parsePattern(input: unknown): PatternParseResult {
     };
   }
 
-  // A bare host is completed to `*://host/*`. Detected by the absence of `://`
-  // rather than by a scheme test, so `http:/example.com` is still an error
-  // instead of being silently treated as a hostname.
+  // Tested on `://` rather than on a scheme, so `http:/example.com` stays an
+  // error instead of being read as a hostname.
   const withScheme = trimmed.includes('://') ? trimmed : `*://${trimmed}`;
 
   const separator = withScheme.indexOf('://');
@@ -128,10 +90,6 @@ export function parsePattern(input: unknown): PatternParseResult {
 
   if (remainder.length === 0) return { ok: false, reason: 'Add a host, such as example.com.' };
 
-  // The host ends at the first slash; everything from there on is the path. A
-  // pattern with no slash at all is completed to `/` — the root, exactly as a
-  // browser would read it — and deliberately *not* to `/*`, which would widen
-  // the pin beyond what was typed.
   const slash = remainder.indexOf('/');
   const rawHost = (slash === -1 ? remainder : remainder.slice(0, slash)).toLowerCase();
   const rawPath = slash === -1 ? '/' : remainder.slice(slash);
@@ -140,7 +98,7 @@ export function parsePattern(input: unknown): PatternParseResult {
   if (!host.ok) return { ok: false, reason: host.reason };
 
   if (rawPath.includes('#')) {
-    return { ok: false, reason: 'Patterns cannot include a #fragment — it is never matched.' };
+    return { ok: false, reason: 'Patterns cannot include a #fragment. It is never matched.' };
   }
   if (countWildcards(rawPath) > MAX_PATH_WILDCARDS) {
     return { ok: false, reason: 'That pattern uses too many "*" wildcards.' };
@@ -161,16 +119,6 @@ export function parsePattern(input: unknown): PatternParseResult {
 type HostParseResult =
   { ok: true; host: string | null; matchSubdomains: boolean } | { ok: false; reason: string };
 
-/**
- * What may appear in a host once the optional leading `*.` is removed.
- *
- * Without this, anything that merely lacks a `/` is taken for a hostname, and
- * an input such as `javascript:alert(1)` parses "successfully" into a pattern
- * that can never match. Rejecting it outright is what lets the pin editor tell
- * the user their input was wrong instead of silently storing a dead rule.
- */
-const HOST_PATTERN = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/;
-
 function parseHost(rawHost: string): HostParseResult {
   if (rawHost === '*') return { ok: true, host: null, matchSubdomains: true };
 
@@ -186,14 +134,10 @@ function parseHost(rawHost: string): HostParseResult {
   if (base.includes('*')) {
     return { ok: false, reason: '"*" is only allowed as the whole host or as a leading "*.".' };
   }
-
-  // Checked before the shape test so the message names the real problem: a port
-  // is a plausible thing to type, and "not a valid host name" would not explain
-  // it. Match patterns have no port syntax, and the port is never matched.
+  // Checked before the shape test so the message names the real problem.
   if (/:\d+$/.test(base)) {
     return { ok: false, reason: 'Patterns cannot include a port number.' };
   }
-
   if (!HOST_PATTERN.test(base)) {
     return { ok: false, reason: `"${base}" is not a valid host name.` };
   }
@@ -210,13 +154,8 @@ function countWildcards(value: string): number {
 }
 
 /**
- * Compiles the path glob.
- *
- * Split on the wildcard first, then escape each literal run. Escaping first and
- * substituting afterwards would need a placeholder character, and every
- * candidate placeholder is one a path is allowed to contain. `*` is the only
- * metacharacter: a pattern such as `/watch?v=abc` must match literally, not as a
- * regular expression where `?` would quietly make the `h` optional.
+ * Split on the wildcard first, then escape each literal run, so `/watch?v=abc`
+ * matches literally instead of `?` making the `h` optional.
  */
 function compilePath(rawPath: string): RegExp {
   const escaped = rawPath
@@ -226,29 +165,21 @@ function compilePath(rawPath: string): RegExp {
   return new RegExp(`^${escaped}$`);
 }
 
-/**
- * Returns the normalized text of a valid pattern, or `null`.
- *
- * This is the form written to storage, so the completed pattern and the one the
- * user sees in the pin list are always the same string.
- */
+/** The stored form of a valid pattern, or `null`. */
 export function normalizeMatchPattern(input: unknown): string | null {
   return parseMatchPattern(input)?.source ?? null;
 }
 
 /**
- * Widens a pattern to cover everything under its path.
- *
- * Exists so the pin editor can offer widening as a visible, reversible choice
- * rather than doing it silently during parsing. Idempotent: a pattern that
- * already ends in `*` is returned unchanged, so ticking the option twice cannot
- * produce `/**`.
+ * Widens a pattern to cover everything under its path. Idempotent, so ticking
+ * the option twice cannot produce `/**`.
  */
 export function widenToPrefix(input: string): string {
   const trimmed = input.trim();
   if (trimmed.length === 0 || trimmed.endsWith('*')) return trimmed;
-  // No path yet: append `/*` for the whole site, rather than a bare `*`, which
-  // would produce `example.com*` and also cover `example.community`.
+
+  // `/*` when there is no path yet, since a bare `*` would give
+  // `example.com*`, which also covers `example.community`.
   const separator = trimmed.indexOf('://');
   const afterHost = separator === -1 ? trimmed : trimmed.slice(separator + 3);
   return afterHost.includes('/') ? `${trimmed}*` : `${trimmed}/*`;
@@ -262,7 +193,6 @@ export function isWildcardPattern(source: string): boolean {
   return path.includes('*');
 }
 
-/** Tests one already-parsed pattern against a URL. */
 export function matchesPattern(pattern: MatchPattern, url: string): boolean {
   let parsed: URL;
   try {
@@ -271,33 +201,29 @@ export function matchesPattern(pattern: MatchPattern, url: string): boolean {
     return false;
   }
 
+  // Only http(s) is pinnable, so `about:` and `moz-extension:` never match.
   const scheme = parsed.protocol.replace(/:$/, '').toLowerCase();
-  // Only http(s) is ever pinnable, so `about:`, `moz-extension:` and friends
-  // never match — including the extension's own full-page view.
   if (!(CONCRETE_SCHEMES as readonly string[]).includes(scheme)) return false;
   if (pattern.scheme !== null && pattern.scheme !== scheme) return false;
 
   if (pattern.host !== null) {
     const host = parsed.hostname.toLowerCase();
     if (pattern.matchSubdomains) {
-      // A dotted suffix test, not a bare one, so `*.example.com` cannot be
-      // satisfied by `notexample.com`.
+      // Dotted suffix, so `*.example.com` cannot match `notexample.com`.
       if (host !== pattern.host && !host.endsWith(`.${pattern.host}`)) return false;
     } else if (host !== pattern.host) {
       return false;
     }
   }
 
-  // `search` carries its own `?`, so this is the URL text after the host with
-  // the fragment dropped — what the specification matches against.
+  // `search` carries its own `?`, so this is the URL after the host with the
+  // fragment dropped.
   return pattern.path.test(`${parsed.pathname}${parsed.search}`);
 }
 
 /**
- * Whether a URL satisfies any pattern in a pin.
- *
- * An empty list means "not pinned", which is why this returns `false` and
- * callers treat an unpinned item as always visible rather than routing it here.
+ * Whether a URL satisfies any pattern in a pin. An empty list means "not
+ * pinned", so callers treat an unpinned item as visible without coming here.
  */
 export function matchesAnyPattern(patterns: readonly string[], url: string | null): boolean {
   if (!url || patterns.length === 0) return false;
@@ -308,12 +234,8 @@ export function matchesAnyPattern(patterns: readonly string[], url: string | nul
 }
 
 /**
- * Cleans a stored or imported pattern list.
- *
- * Invalid entries are dropped rather than rejected: a backup written by a newer
- * version, or hand-edited, should still import the pins it got right instead of
- * failing as a whole. Duplicates collapse because normalisation makes
- * `example.com` and `*://example.com/*` the same string.
+ * Cleans a stored or imported list. Invalid entries are dropped rather than
+ * rejected, so a hand-edited backup still imports the pins it got right.
  */
 export function sanitizePatternList(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
@@ -326,12 +248,7 @@ export function sanitizePatternList(value: unknown): string[] {
   return [...seen];
 }
 
-/**
- * A short human description of what a pattern covers, for the pin list.
- *
- * Phrased as a noun rather than a sentence so it reads correctly next to the
- * pattern text itself.
- */
+/** A short description of what a pattern covers, for the pin list. */
 export function describePattern(source: string): string {
   const pattern = parseMatchPattern(source);
   if (!pattern) return 'Invalid pattern';

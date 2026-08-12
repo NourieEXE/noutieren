@@ -75,8 +75,8 @@ export async function countAllNotes(): Promise<number> {
 /**
  * Note counts for every tab, for the tab badges.
  *
- * Walks the `tabId` index keys only, so no note rows are deserialised — this
- * stays cheap with thousands of notes and re-runs on every live update.
+ * Walks the `tabId` index keys only, so no note rows are deserialised. That
+ * keeps it cheap with thousands of notes, and it re-runs on every live update.
  */
 export async function noteCountsByTab(): Promise<Record<string, number>> {
   const counts: Record<string, number> = {};

@@ -29,7 +29,7 @@ export function SaveStatus() {
       {status.state === 'error' ? <Icon name="warning" size={14} /> : null}
       <span className="save-status__text">
         {status.state === 'error' && status.errorMessage
-          ? `${label} — ${status.errorMessage}`
+          ? `${label}: ${status.errorMessage}`
           : label}
       </span>
     </p>

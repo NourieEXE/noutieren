@@ -6,12 +6,12 @@ minified, so this file explains how to regenerate it.
 
 ## Environment
 
-|                  |                                                                   |
-| ---------------- | ----------------------------------------------------------------- |
-| Operating system | Any (developed on Linux)                                          |
-| Node.js          | 22 or newer — see `.nvmrc`. The published build used Node 26.5.0. |
-| npm              | 10 or newer (npm 12.0.1 was used)                                 |
-| Network          | Needed only for `npm ci`                                          |
+|                  |                                                                  |
+| ---------------- | ---------------------------------------------------------------- |
+| Operating system | Any (developed on Linux)                                         |
+| Node.js          | 22 or newer, see `.nvmrc`. The published build used Node 26.5.0. |
+| npm              | 10 or newer (npm 12.0.1 was used)                                |
+| Network          | Needed only for `npm ci`                                         |
 
 No global tooling is required; every build dependency is in `package.json`.
 
@@ -63,7 +63,7 @@ formatting check, the full test suite, the production build with its audit, and
 `web-ext lint`. This must exit zero before any release.
 
 `web-ext lint` reports **0 errors** and 4 `UNSAFE_VAR_ASSIGNMENT` warnings. All four are
-`innerHTML` assignments inside bundled third-party code — React's `dangerouslySetInnerHTML`
+`innerHTML` assignments inside bundled third-party code: React's `dangerouslySetInnerHTML`
 support and its `<script>` element creation path, ProseMirror's clipboard serialiser, and
 Tiptap's stylesheet injector. The last of these never executes: the editor is created with
 `injectCSS: false` and the equivalent rules ship as static CSS. None can be removed without

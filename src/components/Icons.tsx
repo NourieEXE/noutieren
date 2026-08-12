@@ -1,5 +1,5 @@
 /**
- * Inline SVG icons. Nothing is fetched at runtime — the extension ships no
+ * Inline SVG icons. Nothing is fetched at runtime: the extension ships no
  * remote assets and no icon font.
  *
  * Icons are always decorative here: every control that uses one carries its own

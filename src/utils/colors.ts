@@ -85,7 +85,7 @@ export function contrastRatio(a: string, b: string): number {
 
 /**
  * Picks near-black or near-white text for an arbitrary background, whichever
- * has more contrast — never renders text on a color without checking.
+ * has more contrast, so text is never rendered on a color without checking.
  */
 export function readableTextColor(background: string): string {
   const dark = '#0f172a';

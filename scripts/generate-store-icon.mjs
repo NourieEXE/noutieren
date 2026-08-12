@@ -5,7 +5,7 @@
  * Both the Chrome Web Store and addons.mozilla.org want a 128x128 PNG, and both
  * show it standing alone on a page rather than on browser chrome. The packaged
  * toolbar icon is drawn on transparency for the opposite reason, and looks
- * unanchored in that context — so this one sits on a dark rounded tile, which
+ * unanchored in that context, so this one sits on a dark rounded tile, which
  * also survives being shrunk to the 32px used in listings and search results.
  *
  * Same bars, same geometry, same rasterizer (`lib/icon.mjs`); only the backdrop

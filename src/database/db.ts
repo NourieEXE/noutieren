@@ -43,14 +43,14 @@ export class NoutierenDatabase extends Dexie {
   constructor(name: string = DATABASE_NAME) {
     super(name);
 
-    // v1 — notes stored their document inline.
+    // v1: notes stored their document inline.
     this.version(1).stores({
       tabs: 'id, position, updatedAt',
       notes: 'id, tabId, [tabId+position], position, updatedAt',
       meta: 'key',
     });
 
-    // v2 — documents live in `contents`, so listing notes, building previews
+    // v2: documents live in `contents`, so listing notes, building previews
     // and searching never deserialise a single ProseMirror document.
     this.version(2)
       .stores({
@@ -71,13 +71,9 @@ export class NoutierenDatabase extends Dexie {
         }
       });
 
-    // v3 — tabs and notes may carry `urlPatterns` ("Pin to URL").
-    //
-    // No `.upgrade()` and no index. The field is optional, and a row without it
-    // is exactly what an unpinned item looks like, so every existing row is
-    // already correct and rewriting them would be pure churn. It is left
-    // unindexed because visibility is decided in memory over the tab list and
-    // the open tab's notes, never by a range query.
+    // v3: tabs and notes may carry `urlPatterns`. No upgrade step, since a row
+    // without the field is already a correct unpinned row, and no index, since
+    // visibility is decided in memory over one tab's notes.
     this.version(3).stores({
       tabs: 'id, position, updatedAt',
       notes: 'id, tabId, [tabId+position], position, updatedAt',

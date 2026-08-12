@@ -29,8 +29,8 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, State> {
       <div className="fatal">
         <h1 className="fatal__title">Something went wrong</h1>
         <p>
-          Noutieren could not display your notes. Your saved notes are still on this device — this
-          is a problem with the interface, not with your data.
+          Noutieren could not display your notes. Your saved notes are still on this device, and
+          this is a problem with the interface, not with your data.
         </p>
         <div className="fatal__actions">
           <button

@@ -10,7 +10,7 @@ import { detectViewMode } from '../services/webext';
  * Renders the application into `#root`.
  *
  * A function rather than module-level side effects, because each target has its
- * own entry point — Firefox's `main.tsx`, Chrome's `entry.tsx` — and Chrome's
+ * own entry point (Firefox's `main.tsx`, Chrome's `entry.tsx`), and Chrome's
  * has setup of its own to do first. Import order deciding whether notes save
  * reliably would be a trap; an explicit call cannot be reordered by accident.
  */

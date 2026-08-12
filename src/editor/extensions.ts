@@ -18,7 +18,7 @@ import { sanitizeUrl } from '../utils/url';
  */
 
 export const EDITOR_PLACEHOLDER =
-  'Start writing. Markdown shortcuts work too — "# " for a heading, "- " for a list, "> " for a quote.';
+  'Start writing. Markdown shortcuts work too: "# " for a heading, "- " for a list, "> " for a quote.';
 
 export function createEditorExtensions(placeholder = EDITOR_PLACEHOLDER): Extensions {
   return [

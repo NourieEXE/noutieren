@@ -11,8 +11,8 @@ export interface VirtualWindow {
  * Minimal fixed-height list windowing, so a tab holding thousands of notes
  * renders only the rows on screen.
  *
- * When the container has no measurable height — the first paint, and any
- * non-layout environment such as jsdom — every row is rendered. That keeps
+ * When the container has no measurable height (the first paint, and any
+ * non-layout environment such as jsdom) every row is rendered. That keeps
  * behaviour correct (and testable) instead of silently showing nothing.
  */
 export function useVirtualRows(
