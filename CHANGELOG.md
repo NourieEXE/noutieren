@@ -5,6 +5,11 @@ All notable changes to Noutieren. Dates are the build date; versions follow
 
 ## Unreleased
 
+### Fixed
+
+- Messages no longer mention Firefox or the sidebar, which was wrong in the Chrome popup: the
+  backup reminder, two storage errors and the shortcut note in the help dialog.
+
 ## 1.3.0 - 2026-08-04
 
 ### Added

@@ -57,7 +57,7 @@ export function useExportReminder(onExport: () => void): void {
         duration: 0,
         message:
           preferences.lastExportedAt === null
-            ? 'Your notes are stored only in this Firefox profile and have never been backed up.'
+            ? 'Your notes are stored only in this browser profile and have never been backed up.'
             : `It has been over ${EXPORT_REMINDER_DAYS} days since your last backup.`,
         action: {
           label: 'Export now',

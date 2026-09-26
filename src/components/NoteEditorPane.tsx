@@ -166,8 +166,8 @@ export function NoteEditorPane() {
         <div className="notice notice--error" role="alert">
           <Icon name="warning" />
           <span>
-            This note’s content could not be read from local storage. Try reloading the sidebar; the
-            note itself has not been changed.
+            This note’s content could not be read from local storage. Try closing and reopening
+            Noutieren; the note itself has not been changed.
           </span>
         </div>
       ) : null}

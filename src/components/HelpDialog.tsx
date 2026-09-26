@@ -47,8 +47,8 @@ export function HelpDialog({ open, onClose }: { open: boolean; onClose: () => vo
         </tbody>
       </table>
       <p className="dialog__note">
-        Firefox reserves a few shortcuts for itself. If Ctrl+N opens a browser window instead of a
-        note, use the <strong>New note</strong> button.
+        The browser reserves a few shortcuts for itself. If Ctrl+N opens a browser window instead of
+        a note, use the <strong>New note</strong> button.
       </p>
     </Dialog>
   );

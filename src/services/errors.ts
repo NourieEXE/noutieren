@@ -41,7 +41,7 @@ export function describeError(error: unknown): string {
     const mapped = DOM_EXCEPTION_MESSAGES[error.name.replace(/^Dexie/, '')];
     if (mapped) return mapped;
     if (error.name === 'DatabaseClosedError') {
-      return 'The local database was closed. Reload the sidebar to continue.';
+      return 'The local database was closed. Close and reopen Noutieren to continue.';
     }
     if (error.message.trim().length > 0 && error.message.length < 200) return error.message;
   }
