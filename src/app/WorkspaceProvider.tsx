@@ -392,7 +392,12 @@ export function WorkspaceProvider({
       recolorTab: (id, color) =>
         guard('recolorTab', async () => void (await updateTab(id, { color }))),
 
-      moveTab: (id, delta) => guard('moveTab', async () => void (await moveTabRow(id, delta))),
+      moveTab: (id, delta) =>
+        guard(
+          'moveTab',
+          async () =>
+            void (await moveTabRow(id, delta, new Set(visible.tabs.map((tab) => tab.id)))),
+        ),
 
       deleteTab: (id) =>
         guard('deleteTab', async () => {
@@ -455,7 +460,7 @@ export function WorkspaceProvider({
       moveNote: (id, delta) =>
         guard('moveNote', async () => {
           await saveQueue.flush(id);
-          await moveNoteWithinTab(id, delta);
+          await moveNoteWithinTab(id, delta, new Set(visible.notes.map((note) => note.id)));
         }),
 
       moveNoteToTab: (id, tabId) =>
@@ -522,7 +527,16 @@ export function WorkspaceProvider({
           await Promise.resolve();
         }),
     };
-  }, [effectiveTabId, reportError, selectNote, selectTab, tabs, toasts, visible.notes]);
+  }, [
+    effectiveTabId,
+    reportError,
+    selectNote,
+    selectTab,
+    tabs,
+    toasts,
+    visible.notes,
+    visible.tabs,
+  ]);
 
   /* ------------------------------------------------------------ assembling */
 

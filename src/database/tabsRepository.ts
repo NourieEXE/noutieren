@@ -98,11 +98,20 @@ export async function deleteTab(id: string): Promise<{ deletedNotes: number }> {
   });
 }
 
-/** Moves a tab one slot left (`-1`) or right (`1`). */
-export async function moveTab(id: string, delta: -1 | 1): Promise<boolean> {
+/**
+ * Moves a tab one slot left (`-1`) or right (`1`). With `visibleIds`, tabs a
+ * pin hides are stepped over, since swapping with one changes nothing on screen.
+ */
+export async function moveTab(
+  id: string,
+  delta: -1 | 1,
+  visibleIds?: ReadonlySet<string>,
+): Promise<boolean> {
   const db = getDatabase();
   return db.transaction('rw', db.tabs, async () => {
-    const tabs = await db.tabs.orderBy('position').toArray();
+    const tabs = (await db.tabs.orderBy('position').toArray()).filter(
+      (tab) => tab.id === id || !visibleIds || visibleIds.has(tab.id),
+    );
     const index = tabs.findIndex((tab) => tab.id === id);
     if (index === -1) return false;
 

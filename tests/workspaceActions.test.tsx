@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
@@ -22,7 +22,7 @@ const { DEFAULT_PREFERENCES } = await import('../src/services/preferences');
 const { ensureSeeded } = await import('../src/services/workspaceService');
 const { openDatabase } = await import('../src/database/db');
 const { createTab, listTabs } = await import('../src/database/tabsRepository');
-const { countAllNotes, createNote, getNote, listNotesByTab } =
+const { applyNotePatch, countAllNotes, createNote, getNote, listNotesByTab } =
   await import('../src/database/notesRepository');
 
 async function renderApp(selectedTabId?: string) {
@@ -289,5 +289,72 @@ describe('tab actions', () => {
       expect(remaining[0].title).toBe('General');
     });
     await waitFor(() => expect(screen.getAllByRole('tab')).toHaveLength(1));
+  });
+});
+
+describe('moving with a URL pin hiding a neighbour', () => {
+  const HIDDEN = ['https://elsewhere.test/*'];
+
+  /** An extension API with the tabs permission held, on a page no pin matches. */
+  function stubPinsActive(): void {
+    const events = () => ({ addListener: vi.fn(), removeListener: vi.fn() });
+    vi.stubGlobal('chrome', {
+      runtime: { id: 'test-extension' },
+      permissions: {
+        contains: vi.fn().mockResolvedValue(true),
+        onAdded: events(),
+        onRemoved: events(),
+      },
+      tabs: {
+        query: vi.fn().mockResolvedValue([{ url: 'https://example.com/', active: true }]),
+        onActivated: events(),
+        onUpdated: events(),
+      },
+      windows: { onFocusChanged: events() },
+      storage: {
+        local: { get: vi.fn().mockResolvedValue({}), set: vi.fn().mockResolvedValue(undefined) },
+      },
+    });
+  }
+
+  function tabTitles() {
+    return screen.getAllByRole('tab').map((tab) => tab.querySelector('.tab__title')?.textContent);
+  }
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('moves a note past the hidden one', async () => {
+    const tab = await createTab({ title: 'Work' });
+    await createNote({ tabId: tab.id, title: 'First' });
+    const hidden = await createNote({ tabId: tab.id, title: 'Hidden' });
+    await applyNotePatch(hidden.id, { urlPatterns: HIDDEN });
+    await createNote({ tabId: tab.id, title: 'Last' });
+    stubPinsActive();
+    const { user } = await renderApp(tab.id);
+
+    await waitFor(() => expect(rowTitles()).toEqual(['First', 'Last']));
+    await user.click(within(list()).getByRole('button', { name: /Last/ }));
+    await useNoteMenu(user, /Move up/);
+
+    await waitFor(() => expect(rowTitles()).toEqual(['Last', 'First']));
+  });
+
+  it('moves a tab past the hidden one, and not onto one at the end', async () => {
+    await createTab({ title: 'Alpha' });
+    await createTab({ title: 'Hidden', urlPatterns: HIDDEN });
+    const beta = await createTab({ title: 'Beta' });
+    await createTab({ title: 'Also hidden', urlPatterns: HIDDEN });
+    stubPinsActive();
+    const { user } = await renderApp(beta.id);
+
+    await waitFor(() => expect(tabTitles()).toEqual(['General', 'Alpha', 'Beta']));
+    await user.click(screen.getByRole('button', { name: /Settings for tab "Beta"/ }));
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByRole('button', { name: /Move right/ })).toBeDisabled();
+
+    await user.click(within(dialog).getByRole('button', { name: /Move left/ }));
+    await waitFor(() => expect(tabTitles()).toEqual(['General', 'Beta', 'Alpha']));
   });
 });

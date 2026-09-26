@@ -15,16 +15,8 @@ import { TabSettingsDialog } from './TabSettingsDialog';
  * The strip scrolls horizontally when tabs overflow; the page never does.
  */
 export function TabStrip({ notesPanelId }: { notesPanelId: string | undefined }) {
-  const {
-    tabs,
-    allTabs,
-    noteCounts,
-    selectedTabId,
-    selectTab,
-    actions,
-    pinStatus,
-    setShowHiddenPins,
-  } = useWorkspace();
+  const { tabs, noteCounts, selectedTabId, selectTab, actions, pinStatus, setShowHiddenPins } =
+    useWorkspace();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -32,12 +24,6 @@ export function TabStrip({ notesPanelId }: { notesPanelId: string | undefined })
 
   const selectedIndex = tabs.findIndex((tab) => tab.id === selectedTabId);
   const selectedTab = selectedIndex >= 0 ? tabs[selectedIndex] : undefined;
-
-  // Reordering acts on the stored order, which includes tabs a pin is hiding,
-  // so the move affordance has to be read from the full list. Taking it from
-  // the visible one would disable "Move left" on a tab that can move, and
-  // enable it on a tab that cannot.
-  const orderIndex = allTabs.findIndex((tab) => tab.id === selectedTabId);
 
   const focusTabAt = (index: number) => {
     const clamped = Math.min(Math.max(index, 0), tabs.length - 1);
@@ -183,8 +169,8 @@ export function TabStrip({ notesPanelId }: { notesPanelId: string | undefined })
         <TabSettingsDialog
           tab={selectedTab}
           noteCount={noteCounts[selectedTab.id] ?? 0}
-          canMoveLeft={orderIndex > 0}
-          canMoveRight={orderIndex >= 0 && orderIndex < allTabs.length - 1}
+          canMoveLeft={selectedIndex > 0}
+          canMoveRight={selectedIndex < tabs.length - 1}
           open={settingsOpen}
           onClose={() => setSettingsOpen(false)}
           onRename={(title) => void actions.renameTab(selectedTab.id, title)}

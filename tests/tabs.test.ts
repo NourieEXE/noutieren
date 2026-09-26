@@ -94,6 +94,20 @@ describe('reordering tabs', () => {
     expect((await listTabs()).map((tab) => tab.title)).toEqual(['A', 'B']);
   });
 
+  it('steps over tabs outside the visible set', async () => {
+    const a = await createTab({ title: 'A' });
+    await createTab({ title: 'Hidden' });
+    const c = await createTab({ title: 'C' });
+    const visible = new Set([a.id, c.id]);
+
+    expect(await moveTab(c.id, -1, visible)).toBe(true);
+    expect((await listTabs()).map((tab) => tab.title)).toEqual(['C', 'Hidden', 'A']);
+    expect((await listTabs()).map((tab) => tab.position)).toEqual([0, 1, 2]);
+
+    // Only a hidden tab is to the right of A now.
+    expect(await moveTab(a.id, 1, visible)).toBe(false);
+  });
+
   it('moves a tab to an absolute index', async () => {
     await createTab({ title: 'A' });
     await createTab({ title: 'B' });

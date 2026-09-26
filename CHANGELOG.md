@@ -7,6 +7,9 @@ All notable changes to Noutieren. Dates are the build date; versions follow
 
 ### Fixed
 
+- Moving a tab or note steps over anything a URL pin is hiding. It used to swap with the hidden
+  neighbour, so nothing on screen changed, and a tab with only hidden tabs to its right could
+  still be moved right.
 - Messages no longer mention Firefox or the sidebar, which was wrong in the Chrome popup: the
   backup reminder, two storage errors and the shortcut note in the help dialog.
 

@@ -270,14 +270,23 @@ export async function moveNoteToTab(id: string, tabId: string): Promise<NoteMeta
   });
 }
 
-/** Moves a note one slot up (`-1`) or down (`1`) within its tab. */
-export async function moveNoteWithinTab(id: string, delta: -1 | 1): Promise<boolean> {
+/**
+ * Moves a note one slot up (`-1`) or down (`1`) within its tab. With
+ * `visibleIds`, notes a pin hides are stepped over, as for tabs.
+ */
+export async function moveNoteWithinTab(
+  id: string,
+  delta: -1 | 1,
+  visibleIds?: ReadonlySet<string>,
+): Promise<boolean> {
   const db = getDatabase();
   return db.transaction('rw', db.notes, async () => {
     const note = await db.notes.get(id);
     if (!note) return false;
 
-    const siblings = await tabRange(note.tabId).toArray();
+    const siblings = (await tabRange(note.tabId).toArray()).filter(
+      (item) => item.id === id || !visibleIds || visibleIds.has(item.id),
+    );
     const index = siblings.findIndex((item) => item.id === id);
     const targetIndex = index + delta;
     if (index === -1 || targetIndex < 0 || targetIndex >= siblings.length) return false;

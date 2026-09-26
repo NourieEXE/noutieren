@@ -224,6 +224,26 @@ describe('reordering notes', () => {
     expect(await moveNoteWithinTab(a.id, 1)).toBe(true);
     expect((await listNotesByTab(tab.id)).map((note) => note.title)).toEqual(['B', 'A']);
   });
+
+  it('steps over notes outside the visible set', async () => {
+    const tab = await makeTab();
+    const a = await createNote({ tabId: tab.id, title: 'A' });
+    await createNote({ tabId: tab.id, title: 'Hidden' });
+    const c = await createNote({ tabId: tab.id, title: 'C' });
+    const visible = new Set([a.id, c.id]);
+
+    expect(await moveNoteWithinTab(c.id, -1, visible)).toBe(true);
+    expect((await listNotesByTab(tab.id)).map((note) => note.title)).toEqual(['C', 'Hidden', 'A']);
+  });
+
+  it('refuses to move when only hidden notes lie that way', async () => {
+    const tab = await makeTab();
+    await createNote({ tabId: tab.id, title: 'Hidden' });
+    const b = await createNote({ tabId: tab.id, title: 'B' });
+
+    expect(await moveNoteWithinTab(b.id, -1, new Set([b.id]))).toBe(false);
+    expect((await listNotesByTab(tab.id)).map((note) => note.title)).toEqual(['Hidden', 'B']);
+  });
 });
 
 describe('deleting and restoring notes', () => {
