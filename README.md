@@ -365,14 +365,15 @@ npm run webext:lint # web-ext lint against dist/
 npm run check       # typecheck + lint + tests + both builds + web-ext lint
 ```
 
-232 tests cover creating, renaming, recoloring, reordering and deleting tabs; creating,
+350 tests cover creating, renaming, recoloring, reordering and deleting tabs; creating,
 moving, duplicating, reordering, deleting and restoring notes; autosave debouncing, flushing
 on note switch, and the guarantee that one note never receives another's content; storage
 failures keeping typed text; conflict detection between views; search within one tab and
 across all tabs; export format; valid, invalid and merging imports; import sanitizing; reset;
 the v1→v2 database migration; selection restore; keyboard shortcuts; WCAG AA contrast for
-every palette color; and for the Chrome build, namespace detection, popup view detection,
-message validation, and which teardown path runs on `pagehide`.
+every palette color; URL match patterns, what a pin hides and the optional permission; and for
+the Chrome build, namespace detection, popup view detection, message validation, and which
+teardown path runs on `pagehide`.
 
 `npm run check` builds the Chrome target too, so a change to shared code that breaks it fails
 here rather than silently later.
@@ -393,8 +394,8 @@ Load it at `chrome://extensions` → **Developer mode** → **Load unpacked** �
 
 `verify:chrome` covers what jsdom cannot: that Chrome accepts the manifest and the strict
 CSP, that the popup renders at the size it declares, and the one that matters, that text
-typed a moment before the popup is destroyed is still there when it reopens. Eighteen checks,
-all passing on Chromium 150.
+typed a moment before the popup is destroyed is still there when it reopens. Twenty-eight
+checks, all passing on Chromium 151.
 
 Three things differ from Firefox:
 
