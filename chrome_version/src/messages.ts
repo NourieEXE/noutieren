@@ -36,13 +36,18 @@ function isRecord(value: unknown): value is Record<string, unknown> {
  *
  * `applyNotePatch` writes `plainText`, `tabId` and `position` through to storage
  * untouched, so a wrong type here would become a corrupt row: a string
- * `position` is enough to scramble the order of a tab. Titles and colours are
- * normalized downstream, so a type check is all they need here.
+ * `position` is enough to scramble the order of a tab. Titles, colours and URL
+ * patterns are normalized downstream, so a type check is all they need here.
  */
 function sanitizePatch(source: Record<string, unknown>): NotePatch {
   const patch: NotePatch = {};
   if (typeof source.title === 'string') patch.title = source.title;
   if (typeof source.color === 'string') patch.color = source.color;
+  // An empty list is kept: it clears the pin.
+  const patterns = source.urlPatterns;
+  if (Array.isArray(patterns) && patterns.every((entry) => typeof entry === 'string')) {
+    patch.urlPatterns = patterns;
+  }
   if (typeof source.plainText === 'string') patch.plainText = source.plainText;
   if (isValidId(source.tabId)) patch.tabId = source.tabId;
   if (typeof source.position === 'number' && Number.isFinite(source.position)) {

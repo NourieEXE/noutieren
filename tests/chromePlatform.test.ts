@@ -244,6 +244,22 @@ describe('flush message', () => {
     expect(parsed?.[0].patch).toEqual({ title: 'Kept', plainText: 'kept', position: 3 });
   });
 
+  it('keeps URL pins, including an empty list that clears one', () => {
+    const parsed = parseFlushPending({
+      type: FLUSH_PENDING,
+      writes: [
+        { noteId: 'pinned', patch: { urlPatterns: ['https://example.com/*'] } },
+        { noteId: 'cleared', patch: { urlPatterns: [] } },
+        { noteId: 'junk', patch: { urlPatterns: ['https://example.com/*', 7] } },
+      ],
+    });
+
+    expect(parsed?.map((write) => write.patch)).toEqual([
+      { urlPatterns: ['https://example.com/*'] },
+      { urlPatterns: [] },
+    ]);
+  });
+
   it('drops an entry whose patch has nothing usable left', () => {
     // Writing it would bump `updatedAt` and make the note look edited.
     const parsed = parseFlushPending({
@@ -273,6 +289,23 @@ describe('applying handed-off writes', () => {
     expect(result).toEqual({ written: 1, failed: 0 });
     expect(await getNoteContent(note.id)).toEqual(doc('last keystrokes'));
     expect((await getNote(note.id))?.plainText).toBe('last keystrokes');
+  });
+
+  it('persists a pin change the popup never got to write', async () => {
+    const note = await seedNote('Note');
+    const [write] = parseFlushPending({
+      type: FLUSH_PENDING,
+      writes: [
+        {
+          noteId: note.id,
+          patch: { urlPatterns: ['youtube.com/*'] },
+          expectedUpdatedAt: note.updatedAt,
+        },
+      ],
+    })!;
+
+    expect(await applyHandedOffWrites([write])).toEqual({ written: 1, failed: 0 });
+    expect((await getNote(note.id))?.urlPatterns).toEqual(['*://youtube.com/*']);
   });
 
   it('refuses a stale write, leaving a concurrent edit intact', async () => {
