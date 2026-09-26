@@ -449,13 +449,14 @@ export async function importWithSafetyBackup(
   return importBackup(backup, mode);
 }
 
-/** Deletes everything and recreates the default tab and note. */
+/** Deletes everything, "Recently deleted" included, and recreates the default tab and note. */
 export async function resetAllData(): Promise<void> {
   const db = getDatabase();
-  await db.transaction('rw', db.tabs, db.notes, db.contents, async () => {
+  await db.transaction('rw', db.tabs, db.notes, db.contents, db.trash, async () => {
     await db.contents.clear();
     await db.notes.clear();
     await db.tabs.clear();
+    await db.trash.clear();
   });
   await ensureSeeded();
 }

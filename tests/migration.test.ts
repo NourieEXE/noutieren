@@ -138,20 +138,68 @@ describe('v1 to v2 migration', () => {
     await db.delete();
   });
 
-  it('creates all four object stores with the indexes queries rely on', async () => {
+  it('creates every object store with the indexes queries rely on', async () => {
     const name = `noutieren-indexes-${Date.now()}`;
     const db = new NoutierenDatabase(name);
     __setDatabaseForTests(db);
     await db.open();
 
     const names = db.tables.map((table) => table.name).sort();
-    expect(names).toEqual(['contents', 'meta', 'notes', 'tabs']);
+    expect(names).toEqual(['contents', 'meta', 'notes', 'tabs', 'trash']);
+    expect(db.trash.schema.indexes.map((index) => index.name)).toContain('deletedAt');
 
     const noteIndexes = db.notes.schema.indexes.map((index) => index.name);
     expect(noteIndexes).toContain('tabId');
     expect(noteIndexes).toContain('[tabId+position]');
     expect(noteIndexes).toContain('updatedAt');
     expect(db.tabs.schema.indexes.map((index) => index.name)).toContain('position');
+
+    await db.delete();
+  });
+});
+
+describe('v3 to v4 migration', () => {
+  it('adds Recently deleted without touching existing notes or pins', async () => {
+    const name = `noutieren-v3-${Date.now()}`;
+    const legacy = new Dexie(name);
+    legacy.version(3).stores({
+      tabs: 'id, position, updatedAt',
+      notes: 'id, tabId, [tabId+position], position, updatedAt',
+      contents: 'noteId',
+      meta: 'key',
+    });
+    await legacy.open();
+    await legacy.table('tabs').put({
+      id: 'tab-1',
+      title: 'Video',
+      color: '#ef4444',
+      position: 0,
+      createdAt: 1,
+      updatedAt: 2,
+      urlPatterns: ['*://youtube.com/*'],
+    });
+    await legacy.table('notes').put({
+      id: 'note-1',
+      tabId: 'tab-1',
+      title: 'Kept',
+      color: '#64748b',
+      plainText: 'body',
+      position: 0,
+      createdAt: 10,
+      updatedAt: 20,
+    });
+    await legacy.table('contents').put({ noteId: 'note-1', content: doc('body') });
+    legacy.close();
+
+    const db = new NoutierenDatabase(name);
+    __setDatabaseForTests(db);
+    await db.open();
+
+    expect(db.verno).toBe(SCHEMA_VERSION);
+    expect((await listTabs())[0].urlPatterns).toEqual(['*://youtube.com/*']);
+    expect((await listNotesByTab('tab-1')).map((note) => note.title)).toEqual(['Kept']);
+    expect((await db.contents.get('note-1'))?.content).toEqual(doc('body'));
+    expect(await db.trash.count()).toBe(0);
 
     await db.delete();
   });

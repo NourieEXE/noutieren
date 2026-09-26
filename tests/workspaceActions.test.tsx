@@ -91,7 +91,7 @@ describe('note actions', () => {
     // Gone, with an undo offered rather than a confirmation prompt.
     await waitFor(() => expect(rowTitles()).toEqual(['Other']));
     const undo = await screen.findByRole('button', { name: 'Undo' });
-    expect(screen.getByText(/Deleted "Keep me"/)).toBeInTheDocument();
+    expect(screen.getByText(/Moved "Keep me" to Recently deleted/)).toBeInTheDocument();
 
     await user.click(undo);
 
@@ -118,6 +118,26 @@ describe('note actions', () => {
 
     await useNoteMenu(user, /Move up/);
     await waitFor(() => expect(rowTitles()).toEqual(['First', 'Second']));
+  });
+
+  it('restores a note from Recently deleted', async () => {
+    const tab = await createTab({ title: 'Work' });
+    await createNote({ tabId: tab.id, title: 'Old idea', content: doc('worth keeping') });
+    await createNote({ tabId: tab.id, title: 'Other' });
+    const { user } = await renderApp(tab.id);
+
+    await waitFor(() => expect(rowTitles()).toEqual(['Old idea', 'Other']));
+    await useNoteMenu(user, /Delete note/);
+    await waitFor(() => expect(rowTitles()).toEqual(['Other']));
+
+    await user.click(screen.getByRole('button', { name: 'Settings and data' }));
+    await user.click(await screen.findByRole('menuitem', { name: /Recently deleted/ }));
+    const dialog = await screen.findByRole('dialog', { name: 'Recently deleted' });
+    await user.click(await within(dialog).findByRole('button', { name: 'Restore "Old idea"' }));
+
+    await waitFor(() => expect(rowTitles()).toEqual(['Old idea', 'Other']));
+    await waitFor(() => expect(within(dialog).getByText('Nothing here.')).toBeInTheDocument());
+    expect(screen.getByText(/Restored "Old idea" to "Work"/)).toBeInTheDocument();
   });
 
   it('moves a note to another tab', async () => {
@@ -242,7 +262,7 @@ describe('tab actions', () => {
 
     // Step two: confirm, with the number of notes spelled out.
     const confirm = await screen.findByRole('dialog', { name: /Delete "Doomed"\?/ });
-    expect(within(confirm).getByText(/its 2 notes/)).toBeInTheDocument();
+    expect(within(confirm).getByText(/Its 2 notes go to Recently deleted/)).toBeInTheDocument();
     expect(await listTabs()).toHaveLength(2);
 
     await user.click(within(confirm).getByRole('button', { name: /Delete tab and 2 notes/ }));
@@ -252,6 +272,7 @@ describe('tab actions', () => {
     });
     // The tab's notes went with it; General's seeded note remains.
     expect(await countAllNotes()).toBe(1);
+    expect(await screen.findByText(/Its 2 notes are in Recently deleted/)).toBeInTheDocument();
   });
 
   it('can be cancelled without deleting anything', async () => {

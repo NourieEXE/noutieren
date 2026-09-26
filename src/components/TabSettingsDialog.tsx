@@ -4,6 +4,7 @@ import { ConfirmDialog, Dialog } from './Dialog';
 import { ColorPicker } from './ColorPicker';
 import { PinToUrlField } from './PinToUrlField';
 import { Icon } from './Icons';
+import { TRASH_RETENTION_DAYS } from '../database/trashRepository';
 
 /**
  * Rename, recolor, reorder or delete a tab.
@@ -131,11 +132,13 @@ export function TabSettingsDialog({
         description={
           noteCount === 0
             ? 'This tab is empty. Deleting it cannot be undone.'
-            : `This permanently deletes the tab and its ${noteCount} ${
-                noteCount === 1 ? 'note' : 'notes'
-              }. This cannot be undone.`
+            : `This deletes the tab. Its ${noteCount === 1 ? 'note goes' : `${noteCount} notes go`} to Recently deleted for ${TRASH_RETENTION_DAYS} days.`
         }
-        confirmLabel={noteCount === 0 ? 'Delete tab' : `Delete tab and ${noteCount} notes`}
+        confirmLabel={
+          noteCount === 0
+            ? 'Delete tab'
+            : `Delete tab and ${noteCount} ${noteCount === 1 ? 'note' : 'notes'}`
+        }
         onConfirm={() => {
           onDelete();
           onClose();

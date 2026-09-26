@@ -1264,6 +1264,50 @@ img.ProseMirror-separator {
   background: var(--bg-hover);
 }
 
+.trash-list {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.trash-list__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+}
+
+.trash-list__item .note-row__strip {
+  align-self: stretch;
+}
+
+.trash-list__text {
+  display: grid;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.trash-list__title {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.trash-list__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--fg-subtle);
+  font-size: 12px;
+}
+
 .shortcut-table {
   width: 100%;
   border-collapse: collapse;

@@ -55,6 +55,16 @@ export interface Note extends NoteMeta {
   content: JSONContent;
 }
 
+/** A deleted note, kept in "Recently deleted" until it expires. */
+export interface TrashEntry {
+  noteId: string;
+  meta: NoteMeta;
+  content: JSONContent;
+  /** Its tab as it was, so restoring can bring back a tab deleted since. */
+  tab: NoteTab | null;
+  deletedAt: number;
+}
+
 export type ThemePreference = 'system' | 'light' | 'dark';
 
 export interface AppPreferences {

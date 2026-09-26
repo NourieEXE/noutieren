@@ -1,4 +1,5 @@
 import { getDatabase } from './db';
+import { moveNotesToTrash } from './trashRepository';
 import type { NoteTab } from '../types';
 import { createId } from '../utils/id';
 import { DEFAULT_TAB_COLOR, normalizeColor } from '../utils/colors';
@@ -81,20 +82,17 @@ export async function updateTab(
 }
 
 /**
- * Deletes a tab together with every note it contains.
- *
- * Returns the number of deleted notes so the caller can report it; the
- * confirmation prompt is the caller's responsibility.
+ * Deletes a tab. Its notes go to "Recently deleted". The confirmation prompt
+ * is the caller's job.
  */
 export async function deleteTab(id: string): Promise<{ deletedNotes: number }> {
   const db = getDatabase();
-  return db.transaction('rw', db.tabs, db.notes, db.contents, async () => {
-    const noteIds = await db.notes.where('tabId').equals(id).primaryKeys();
-    await db.contents.bulkDelete(noteIds);
-    await db.notes.bulkDelete(noteIds);
+  return db.transaction('rw', db.tabs, db.notes, db.contents, db.trash, async () => {
+    const notes = await db.notes.where('tabId').equals(id).toArray();
+    await moveNotesToTrash(notes);
     await db.tabs.delete(id);
     await renumberTabsWithin(db);
-    return { deletedNotes: noteIds.length };
+    return { deletedNotes: notes.length };
   });
 }
 

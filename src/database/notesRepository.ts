@@ -1,6 +1,7 @@
 import Dexie from 'dexie';
 import { getDatabase } from './db';
-import type { JSONContent, Note, NoteMeta, NotePatch, SearchScope } from '../types';
+import { moveNotesToTrash } from './trashRepository';
+import type { JSONContent, Note, NoteMeta, NotePatch, SearchScope, TrashEntry } from '../types';
 import { createId } from '../utils/id';
 import { DEFAULT_NOTE_COLOR, normalizeColor } from '../utils/colors';
 import { sanitizePatternList } from '../utils/matchPattern';
@@ -15,12 +16,6 @@ import { createEmptyDocument, extractPlainText } from '../editor/document';
  */
 
 export const DEFAULT_NOTE_TITLE = 'New note';
-
-/** Everything needed to restore a deleted note, for undo. */
-export interface NoteSnapshot {
-  meta: NoteMeta;
-  content: JSONContent;
-}
 
 export type PatchResult =
   | { status: 'saved'; updatedAt: number }
@@ -191,37 +186,14 @@ export async function applyNotePatch(
   });
 }
 
-/** Deletes a note and returns a snapshot so the action can be undone. */
-export async function deleteNote(id: string): Promise<NoteSnapshot | undefined> {
+/** Moves a note to "Recently deleted". */
+export async function deleteNote(id: string): Promise<TrashEntry | undefined> {
   const db = getDatabase();
-  return db.transaction('rw', db.notes, db.contents, async () => {
+  return db.transaction('rw', db.tabs, db.notes, db.contents, db.trash, async () => {
     const meta = await db.notes.get(id);
     if (!meta) return undefined;
-    const content = (await db.contents.get(id))?.content ?? createEmptyDocument();
-    await db.contents.delete(id);
-    await db.notes.delete(id);
-    return { meta, content };
-  });
-}
-
-/**
- * Restores a snapshot produced by `deleteNote`.
- *
- * If the original tab is gone the note is placed in `fallbackTabId`, so undo
- * still works after the tab was deleted too.
- */
-export async function restoreNote(
-  snapshot: NoteSnapshot,
-  fallbackTabId?: string,
-): Promise<NoteMeta> {
-  const db = getDatabase();
-  return db.transaction('rw', db.tabs, db.notes, db.contents, async () => {
-    const tabExists = (await db.tabs.get(snapshot.meta.tabId)) !== undefined;
-    const tabId = tabExists ? snapshot.meta.tabId : (fallbackTabId ?? snapshot.meta.tabId);
-    const meta: NoteMeta = { ...snapshot.meta, tabId };
-    await db.notes.put(meta);
-    await db.contents.put({ noteId: meta.id, content: snapshot.content });
-    return meta;
+    const [entry] = await moveNotesToTrash([meta]);
+    return entry;
   });
 }
 

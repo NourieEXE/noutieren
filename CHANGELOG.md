@@ -5,6 +5,17 @@ All notable changes to Noutieren. Dates are the build date; versions follow
 
 ## Unreleased
 
+### Added
+
+- **Recently deleted.** Deleting a note, or a tab with notes in it, moves the notes to
+  _Settings → Recently deleted_ for 30 days instead of erasing them. Restore puts a note back
+  where it was, and brings its tab back if that was deleted too. _Delete forever_ and _Empty_
+  are there for when you mean it. Reset clears it; exports leave it out.
+
+### Changed
+
+- **Database schema version 4.** Adds the `trash` table. No upgrade step.
+
 ### Fixed
 
 - Moving a tab or note steps over anything a URL pin is hiding. It used to swap with the hidden

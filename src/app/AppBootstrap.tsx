@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { AppPreferences } from '../types';
 import { openDatabase } from '../database/db';
+import { purgeExpiredTrash } from '../database/trashRepository';
 import { ensureSeeded } from '../services/workspaceService';
 import { loadPreferences, subscribeToPreferences } from '../services/preferences';
 import { describeError, logError, logWarning } from '../services/errors';
@@ -29,6 +30,7 @@ export function AppBootstrap() {
       try {
         await openDatabase();
         await ensureSeeded();
+        void purgeExpiredTrash().catch((error: unknown) => logError('purgeExpiredTrash', error));
         // Ask for eviction-exempt storage before the user writes anything.
         // Failure is not fatal: notes still save, they are just evictable.
         void ensurePersistentStorage().then((state) => {

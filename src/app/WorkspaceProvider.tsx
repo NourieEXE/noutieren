@@ -18,8 +18,8 @@ import {
   moveNoteToTab as moveNoteToTabRow,
   moveNoteWithinTab,
   noteCountsByTab,
-  restoreNote,
 } from '../database/notesRepository';
+import { restoreFromTrash } from '../database/trashRepository';
 import { createTab as createTabRow } from '../database/tabsRepository';
 import {
   deleteTabEnsuringOne,
@@ -405,9 +405,11 @@ export function WorkspaceProvider({
           const { deletedNotes, replacementTab } = await deleteTabEnsuringOne(id);
           if (replacementTab) selectTab(replacementTab.id);
           toasts.push({
-            message: `Deleted "${tab?.title ?? 'tab'}"${
-              deletedNotes > 0 ? ` and ${deletedNotes} note${deletedNotes === 1 ? '' : 's'}` : ''
-            }.`,
+            message: `Deleted "${tab?.title ?? 'tab'}".${
+              deletedNotes === 0
+                ? ''
+                : ` Its ${deletedNotes === 1 ? 'note is' : `${deletedNotes} notes are`} in Recently deleted.`
+            }`,
             tone: 'success',
           });
         }),
@@ -492,28 +494,41 @@ export function WorkspaceProvider({
           const index = list.findIndex((note) => note.id === id);
           const neighbour = list[index + 1] ?? list[index - 1] ?? null;
 
-          const snapshot = await deleteNoteRow(id);
+          // Written first, so the copy in Recently deleted has the last keystrokes.
+          await saveQueue.flush(id);
+          const entry = await deleteNoteRow(id);
           saveQueue.discard(id);
-          if (!snapshot) return;
+          if (!entry) return;
 
           selectNote(neighbour ? neighbour.id : null);
 
           toasts.push({
-            message: `Deleted "${snapshot.meta.title}".`,
+            message: `Moved "${entry.meta.title}" to Recently deleted.`,
             action: {
               label: 'Undo',
               onAction: () => {
                 void (async () => {
                   try {
-                    const fallback = effectiveTabId ?? tabs?.[0]?.id;
-                    const restored = await restoreNote(snapshot, fallback);
-                    selectNote(restored.id);
+                    const restored = await restoreFromTrash(id);
+                    if (restored) revealNote(restored.tabId, restored.id);
                   } catch (error) {
-                    reportError('restoreNote', error);
+                    reportError('restoreFromTrash', error);
                   }
                 })();
               },
             },
+          });
+        }),
+
+      restoreDeletedNote: (id) =>
+        guard('restoreDeletedNote', async () => {
+          const restored = await restoreFromTrash(id);
+          if (!restored) return;
+          const tab = await getTab(restored.tabId);
+          toasts.push({
+            message: `Restored "${restored.title}" to "${tab?.title ?? 'tab'}".`,
+            tone: 'success',
+            action: { label: 'Open', onAction: () => revealNote(restored.tabId, restored.id) },
           });
         }),
 
@@ -530,6 +545,7 @@ export function WorkspaceProvider({
   }, [
     effectiveTabId,
     reportError,
+    revealNote,
     selectNote,
     selectTab,
     tabs,

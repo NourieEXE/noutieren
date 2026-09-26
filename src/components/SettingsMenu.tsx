@@ -18,6 +18,7 @@ import { Menu, MenuItem, MenuSeparator } from './Menu';
 import { useExportBackup } from '../hooks/useExportBackup';
 import { describeLastExport } from '../services/storageDurability';
 import { Icon } from './Icons';
+import { RecentlyDeletedDialog } from './RecentlyDeletedDialog';
 
 const THEME_OPTIONS: readonly { value: ThemePreference; label: string }[] = [
   { value: 'system', label: 'Match system' },
@@ -40,6 +41,7 @@ export function SettingsMenu() {
 
   const [pendingImport, setPendingImport] = useState<ParsedBackup | null>(null);
   const [resetOpen, setResetOpen] = useState(false);
+  const [trashOpen, setTrashOpen] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const handleFileChosen = async (file: File) => {
@@ -155,6 +157,15 @@ export function SettingsMenu() {
               <Icon name="note" />
               Import data…
             </MenuItem>
+            <MenuItem
+              onSelect={() => {
+                close();
+                setTrashOpen(true);
+              }}
+            >
+              <Icon name="undo" />
+              Recently deleted…
+            </MenuItem>
             <MenuSeparator />
             <MenuItem
               tone="danger"
@@ -241,10 +252,12 @@ export function SettingsMenu() {
         ) : null}
       </Dialog>
 
+      <RecentlyDeletedDialog open={trashOpen} onClose={() => setTrashOpen(false)} />
+
       <ConfirmDialog
         open={resetOpen}
         title="Delete all notes and tabs?"
-        description="Every tab and note in this browser profile is permanently deleted, and a new empty General tab is created. This cannot be undone. Export a backup first if you might want this data."
+        description="Every tab and note in this browser profile is permanently deleted, Recently deleted included, and a new empty General tab is created. This cannot be undone. Export a backup first if you might want this data."
         confirmLabel="Delete everything"
         onConfirm={() => void handleReset()}
         onClose={() => setResetOpen(false)}

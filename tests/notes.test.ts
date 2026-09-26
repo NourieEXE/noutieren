@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { doc, resetDatabase } from './helpers';
-import { createTab, deleteTab, listTabs } from '../src/database/tabsRepository';
+import { createTab, listTabs } from '../src/database/tabsRepository';
 import {
   applyNotePatch,
   countAllNotes,
@@ -15,7 +15,6 @@ import {
   moveNoteToTab,
   moveNoteWithinTab,
   noteCountsByTab,
-  restoreNote,
 } from '../src/database/notesRepository';
 import { getDatabase } from '../src/database/db';
 
@@ -246,44 +245,18 @@ describe('reordering notes', () => {
   });
 });
 
-describe('deleting and restoring notes', () => {
-  it('deletes the note and its document, returning a snapshot', async () => {
+describe('deleting notes', () => {
+  it('moves the note and its document to Recently deleted', async () => {
     const tab = await makeTab();
     const note = await createNote({ tabId: tab.id, title: 'Temp', content: doc('important') });
 
-    const snapshot = await deleteNote(note.id);
+    const entry = await deleteNote(note.id);
 
-    expect(snapshot?.meta.title).toBe('Temp');
-    expect(snapshot?.content).toEqual(doc('important'));
+    expect(entry?.meta.title).toBe('Temp');
+    expect(entry?.content).toEqual(doc('important'));
     expect(await getNote(note.id)).toBeUndefined();
     expect(await getDatabase().contents.count()).toBe(0);
-  });
-
-  it('restores a deleted note exactly, for undo', async () => {
-    const tab = await makeTab();
-    const note = await createNote({ tabId: tab.id, title: 'Temp', content: doc('important') });
-    const snapshot = await deleteNote(note.id);
-
-    const restored = await restoreNote(snapshot!);
-
-    expect(restored.id).toBe(note.id);
-    expect(restored.title).toBe('Temp');
-    expect(restored.position).toBe(note.position);
-    expect(restored.createdAt).toBe(note.createdAt);
-    expect(await getNoteContent(note.id)).toEqual(doc('important'));
-  });
-
-  it('restores into a fallback tab when the original tab is gone', async () => {
-    const original = await makeTab('Original');
-    const fallback = await makeTab('Fallback');
-    const note = await createNote({ tabId: original.id, title: 'Orphan' });
-    const snapshot = await deleteNote(note.id);
-    await deleteTab(original.id);
-
-    const restored = await restoreNote(snapshot!, fallback.id);
-
-    expect(restored.tabId).toBe(fallback.id);
-    expect((await listNotesByTab(fallback.id)).map((item) => item.title)).toEqual(['Orphan']);
+    expect((await getDatabase().trash.get(note.id))?.content).toEqual(doc('important'));
   });
 
   it('returns undefined when deleting something that is not there', async () => {

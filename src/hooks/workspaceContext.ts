@@ -35,7 +35,9 @@ export interface WorkspaceActions {
   moveNote: (id: string, delta: -1 | 1) => Promise<void>;
   moveNoteToTab: (id: string, tabId: string) => Promise<void>;
   duplicateNote: (id: string) => Promise<void>;
+  /** Moves the note to Recently deleted, with an undo. */
   deleteNote: (id: string) => Promise<void>;
+  restoreDeletedNote: (id: string) => Promise<void>;
   /** Debounced through the autosave queue. */
   updateNoteContent: (id: string, content: JSONContent, plainText: string) => void;
 

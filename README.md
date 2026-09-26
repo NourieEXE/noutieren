@@ -46,6 +46,8 @@ Built with React, TypeScript, Vite, Tiptap/ProseMirror and Dexie. MIT licensed.
 - [Pin to URL](#pin-to-url): a tab or a note can be set to appear only while a particular page
   is open.
 - Search over note titles and text, in the current tab or across all of them.
+- Deleted notes, including those in a deleted tab, wait in **Recently deleted** for 30 days
+  and can be restored from there.
 - Export everything to a JSON file, import it back by replacing or merging, or reset.
 - Light, dark and system themes, keyboard navigation, and a layout that works from a 320 px
   sidebar to a full window.
@@ -257,6 +259,9 @@ may open a browser window instead of a note. The **New note** button always work
   documents, so listing, previewing and searching never deserialise a single editor
   document. Indexes exist for notes by tab, notes by tab and position, notes by updated time,
   and tabs by position.
+- **Recently deleted** is the `trash` table: a deleted note's metadata, document and a copy
+  of its tab, so restoring a note from a deleted tab brings the tab back. Entries older than
+  30 days are removed when Noutieren opens.
 - **URL pins** are stored as an optional `urlPatterns` array on the tab or note row itself.
   It is unindexed, since visibility is decided in memory over the tab list and the open
   tab's notes, and absent rather than empty when an item is unpinned, so
@@ -319,8 +324,10 @@ allowlist so nothing in a file can become executable markup. Then you choose:
 - **Replace** deletes current data first. A safety backup of your existing data is
   downloaded automatically before anything is removed.
 
-**Reset** (settings menu → _Reset all data…_) deletes everything after an explicit
-confirmation and recreates the default `General` tab.
+**Reset** (settings menu → _Reset all data…_) deletes everything, Recently deleted included,
+after an explicit confirmation and recreates the default `General` tab.
+
+Recently deleted is not part of an export.
 
 ## Project structure
 

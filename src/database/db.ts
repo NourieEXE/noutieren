@@ -1,5 +1,5 @@
 import Dexie, { type EntityTable, type Transaction } from 'dexie';
-import type { JSONContent, NoteContentRow, NoteMeta, NoteTab } from '../types';
+import type { JSONContent, NoteContentRow, NoteMeta, NoteTab, TrashEntry } from '../types';
 
 /**
  * IndexedDB database name.
@@ -24,7 +24,7 @@ export const DATABASE_NAME = 'colornote-tabs';
  * handler; never edit an existing version block, or installed databases will
  * fail to open. Recorded in the `meta` table and in every backup file.
  */
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 
 export interface MetaRow {
   key: string;
@@ -39,6 +39,7 @@ export class NoutierenDatabase extends Dexie {
   notes!: EntityTable<NoteMeta, 'id'>;
   contents!: EntityTable<NoteContentRow, 'noteId'>;
   meta!: EntityTable<MetaRow, 'key'>;
+  trash!: EntityTable<TrashEntry, 'noteId'>;
 
   constructor(name: string = DATABASE_NAME) {
     super(name);
@@ -79,6 +80,16 @@ export class NoutierenDatabase extends Dexie {
       notes: 'id, tabId, [tabId+position], position, updatedAt',
       contents: 'noteId',
       meta: 'key',
+    });
+
+    // v4: deleted notes wait in `trash` instead of being removed. A new table,
+    // so nothing to upgrade.
+    this.version(4).stores({
+      tabs: 'id, position, updatedAt',
+      notes: 'id, tabId, [tabId+position], position, updatedAt',
+      contents: 'noteId',
+      meta: 'key',
+      trash: 'noteId, deletedAt',
     });
   }
 }

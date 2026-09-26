@@ -5,11 +5,12 @@ import { getDatabase } from '../src/database/db';
 export async function resetDatabase(): Promise<void> {
   const db = getDatabase();
   if (!db.isOpen()) await db.open();
-  await db.transaction('rw', db.tabs, db.notes, db.contents, db.meta, async () => {
+  await db.transaction('rw', db.tabs, db.notes, db.contents, db.meta, db.trash, async () => {
     await db.contents.clear();
     await db.notes.clear();
     await db.tabs.clear();
     await db.meta.clear();
+    await db.trash.clear();
   });
 }
 

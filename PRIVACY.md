@@ -85,7 +85,11 @@ uploaded anywhere. Once it exists, looking after it is up to you.
 
 ## Deleting your data
 
-- _Reset all data_ in the settings menu deletes every tab and note immediately.
+- Deleting a note, or a tab with notes in it, moves those notes to _Recently deleted_ in the
+  settings menu. They stay on this device for 30 days, then they are removed. _Delete forever_
+  and _Empty_ remove them straight away.
+- _Reset all data_ in the settings menu deletes every tab and note immediately, Recently
+  deleted included.
 - Uninstalling the extension, or deleting your Firefox profile, removes the database with it.
 
 Because nothing leaves your device, there is nothing for the author to delete on your behalf,

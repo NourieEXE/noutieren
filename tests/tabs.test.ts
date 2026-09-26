@@ -122,7 +122,7 @@ describe('reordering tabs', () => {
 });
 
 describe('deleting tabs', () => {
-  it('deletes the tab, its notes and their documents', async () => {
+  it('deletes the tab and moves its notes to Recently deleted', async () => {
     const tab = await createTab({ title: 'Doomed' });
     const other = await createTab({ title: 'Kept' });
     await createNote({ tabId: tab.id, title: 'One' });
@@ -134,8 +134,9 @@ describe('deleting tabs', () => {
     expect(result.deletedNotes).toBe(2);
     expect(await getTab(tab.id)).toBeUndefined();
     expect(await listNotesByTab(tab.id)).toEqual([]);
-    // No orphaned documents are left behind.
+    // No orphaned documents are left behind; the two went with their notes.
     expect(await getDatabase().contents.count()).toBe(1);
+    expect(await getDatabase().trash.count()).toBe(2);
     expect((await listNotesByTab(other.id)).map((note) => note.id)).toEqual([survivor.id]);
   });
 
