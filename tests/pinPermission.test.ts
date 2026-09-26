@@ -72,7 +72,7 @@ describe('the full-page grant hand-off', () => {
 
   it('opens the flagged URL, keeping the view parameter intact', async () => {
     stubBrowser({ runtime: { id: 'x', getURL: (p: string) => `chrome-extension://x/${p}` } });
-    await openFullPageEditor({ forPinGrant: true });
+    await openFullPageEditor({ grant: 'pins' });
 
     const api = stubbed<{ tabs: { create: { mock: { calls: { url: string }[][] } } } }>();
     const url = api.tabs.create.mock.calls[0][0].url;

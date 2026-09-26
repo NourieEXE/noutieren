@@ -3,7 +3,7 @@ import { useWorkspace } from '../hooks/workspaceContext';
 import { useNoteContent } from '../hooks/useNoteContent';
 import { RichTextEditor } from '../editor/RichTextEditor';
 import { saveQueue } from '../services/saveQueue';
-import { formatAbsoluteTime, formatRelativeTime } from '../utils/time';
+import { formatAbsoluteTime, formatRelativeTime, formatReminderTime } from '../utils/time';
 import { colorName } from '../utils/colors';
 import type { NoteMeta } from '../types';
 import { Dialog } from './Dialog';
@@ -12,6 +12,8 @@ import { PinToUrlField } from './PinToUrlField';
 import { Menu, MenuItem, MenuSeparator } from './Menu';
 import { Icon } from './Icons';
 import { SaveStatus } from './SaveStatus';
+import { ReminderDialog } from './ReminderDialog';
+import { useNotificationPermission } from '../hooks/useNotificationPermission';
 
 /**
  * Editor for the selected note: title, color, actions, and the rich-text
@@ -26,6 +28,8 @@ export function NoteEditorPane() {
   const [colorDialogOpen, setColorDialogOpen] = useState(false);
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
   const [pinDialogOpen, setPinDialogOpen] = useState(false);
+  const [reminderDialogOpen, setReminderDialogOpen] = useState(false);
+  const notificationsAllowed = useNotificationPermission();
 
   const noteId = selectedNote?.id ?? null;
   const { status, content, reload } = useNoteContent(noteId);
@@ -146,6 +150,15 @@ export function NoteEditorPane() {
                 <Icon name="pin" />
                 {notePinned ? 'Edit URL pin…' : 'Pin to URL…'}
               </MenuItem>
+              <MenuItem
+                onSelect={() => {
+                  close();
+                  setReminderDialogOpen(true);
+                }}
+              >
+                <Icon name="bell" />
+                {selectedNote.remindAt !== undefined ? 'Edit reminder…' : 'Remind me…'}
+              </MenuItem>
               <MenuSeparator />
               <MenuItem
                 tone="danger"
@@ -193,6 +206,18 @@ export function NoteEditorPane() {
         <span title={formatAbsoluteTime(selectedNote.createdAt)}>
           Created {formatRelativeTime(selectedNote.createdAt)}
         </span>
+        {selectedNote.remindAt !== undefined ? (
+          <button
+            type="button"
+            className="editor-pane__reminder"
+            onClick={() => setReminderDialogOpen(true)}
+            title={`Reminder: ${formatAbsoluteTime(selectedNote.remindAt)}`}
+          >
+            <Icon name="bell" size={12} />
+            {formatReminderTime(selectedNote.remindAt)}
+            {notificationsAllowed ? null : ' (notifications off)'}
+          </button>
+        ) : null}
       </footer>
 
       <Dialog
@@ -240,6 +265,14 @@ export function NoteEditorPane() {
           onChange={(patterns) => void actions.pinNote(selectedNote.id, patterns)}
         />
       </Dialog>
+
+      {reminderDialogOpen ? (
+        <ReminderDialog
+          note={selectedNote}
+          granted={notificationsAllowed}
+          onClose={() => setReminderDialogOpen(false)}
+        />
+      ) : null}
 
       <Dialog
         open={moveDialogOpen}

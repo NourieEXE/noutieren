@@ -27,7 +27,7 @@ Built with React, TypeScript, Vite, Tiptap/ProseMirror and Dexie. MIT licensed.
 
 ### Contents
 
-- [What it does](#what-it-does) · [Pin to URL](#pin-to-url) · [Privacy](#privacy) · [Requirements](#requirements)
+- [What it does](#what-it-does) · [Pin to URL](#pin-to-url) · [Reminders](#reminders) · [Privacy](#privacy) · [Requirements](#requirements)
 - [Install](#install-dependencies) · [Development](#run-in-development) · [Build](#build) · [Package](#package-with-web-ext)
 - [Installing permanently](#installing-permanently-signing) · [Keyboard shortcuts](#keyboard-shortcuts)
 - [Data storage](#data-storage) · [Renaming and identifiers](#renaming-and-identifiers) · [Re-signing](#making-changes-and-re-signing)
@@ -45,6 +45,8 @@ Built with React, TypeScript, Vite, Tiptap/ProseMirror and Dexie. MIT licensed.
   Ctrl/Cmd+S.
 - [Pin to URL](#pin-to-url): a tab or a note can be set to appear only while a particular page
   is open.
+- [Reminders](#reminders): a note can send a notification at a time you pick, even with
+  Noutieren closed.
 - Search over note titles and text, in the current tab or across all of them.
 - Deleted notes, including those in a deleted tab, wait in **Recently deleted** for 30 days
   and can be restored from there.
@@ -98,7 +100,7 @@ Pins hide, they never delete. When a pin is hiding something, a button appears i
 strip with the count, and one click reveals everything. Pins also do not apply in the
 full-page view, which is a browser tab itself, so that is always a way back.
 
-### The optional permission
+### The `tabs` permission
 
 Matching against the current page means knowing its address, which needs the `tabs`
 permission. It is optional and off by default:
@@ -124,14 +126,32 @@ there. **Enable Pin to URL** opens the full page and asks there instead. Grant i
 tab, and pins work in the popup from then on. Firefox's sidebar stays open and prompts in
 place.
 
+## Reminders
+
+**Note actions → Remind me…** sets a time: in an hour, this evening, tomorrow morning, next week,
+or any date and time. The note then shows a bell in the list and the time in its footer.
+
+When it is due, the browser shows a notification with the note's title and the start of its
+text, even with Noutieren closed. Clicking it opens the note in a full-page tab, since a
+notification cannot open the sidebar. A reminder that came due while the browser was closed
+shows the next time it starts. Each one goes off once.
+
+Notifications need the optional `notifications` permission, asked for the first time you set a
+reminder. Declining keeps the reminder, and it shows once notifications are allowed. As with
+pins, the Chrome popup cannot ask, so **Allow notifications** opens the full page to ask there.
+
+`alarms`, which wakes Noutieren up when a reminder is due, is a required permission. Firefox
+does not allow it as an optional one, and it shows no prompt at install or on update.
+
 ## Privacy
 
 - No network requests. No analytics, telemetry, ads, accounts, or cloud sync.
 - No content scripts and no host permissions. The extension cannot see the contents of any web
   page you visit.
-- Two permissions are requested at install: `storage` and `unlimitedStorage`. One further
-  permission, `tabs`, is optional and requested at runtime only if you use
-  [Pin to URL](#pin-to-url).
+- Three permissions are requested at install, none of which shows a prompt: `storage`,
+  `unlimitedStorage` and `alarms`. Two more are optional and asked for only when you use the
+  feature: `tabs` for [Pin to URL](#pin-to-url) and `notifications` for
+  [reminders](#reminders).
 - All code and dependencies are bundled locally. The build is verified to contain no remote
   scripts, styles, fonts or `eval`-style dynamic code.
 - Your notes live in this Firefox profile's IndexedDB. Deleting the extension's data or the
@@ -266,6 +286,8 @@ may open a browser window instead of a note. The **New note** button always work
   It is unindexed, since visibility is decided in memory over the tab list and the open
   tab's notes, and absent rather than empty when an item is unpinned, so
   every row written before 1.3.0 is already a correct unpinned row.
+- **Reminders** are a `remindAt` time on the note row, indexed so the due ones are one query.
+  Alarms are rebuilt from it at startup, since Firefox does not keep them across a restart.
 - **`browser.storage.local`** holds only small UI preferences: selected tab and note,
   collapsed panel, theme, search scope, and whether the "show hidden" pin override is on.
 - `unlimitedStorage` is requested so notes are not capped by the default extension quota.
@@ -341,13 +363,14 @@ scripts/
   package-chrome.mjs     Writes a reproducible Chrome Web Store zip using only zlib
 src/
   app/                   Entry point, mount, bootstrap, shell, error boundary, workspace state
-  background/            Event page: toolbar click opens the sidebar
+  background/            Event page: toolbar click opens the sidebar; fires reminders
   components/            Tab strip, notes panel, editor pane, dialogs, menus, toasts
   database/              Dexie schema and migrations, tab and note repositories
   editor/                Tiptap setup, toolbar, plain-text extraction, import sanitizer
   hooks/                 Contexts, autosave status, theme, shortcuts, list windowing, active URL
   services/              Autosave queue, preferences, backup, workspace, errors, WebExt API,
-                         active-tab URL + optional permission, URL-pin visibility rules
+                         active-tab URL + optional permission, URL-pin visibility rules,
+                         reminder alarms
   styles/                One stylesheet, custom properties, light/dark, container queries
   types/                 Shared types and the `browser`/`chrome` namespace declarations
   utils/                 Colors, ids, time, download, link URLs, URL match patterns
@@ -372,12 +395,13 @@ npm run webext:lint # web-ext lint against dist/
 npm run check       # typecheck + lint + tests + both builds + web-ext lint
 ```
 
-350 tests cover creating, renaming, recoloring, reordering and deleting tabs; creating,
-moving, duplicating, reordering, deleting and restoring notes; autosave debouncing, flushing
+390 tests cover creating, renaming, recoloring, reordering and deleting tabs; creating,
+moving, duplicating, reordering, deleting and restoring notes; Recently deleted; reminders,
+their alarms and what the background does with them; autosave debouncing, flushing
 on note switch, and the guarantee that one note never receives another's content; storage
 failures keeping typed text; conflict detection between views; search within one tab and
 across all tabs; export format; valid, invalid and merging imports; import sanitizing; reset;
-the v1→v2 database migration; selection restore; keyboard shortcuts; WCAG AA contrast for
+the v1→v2 and v3→v5 database migrations; selection restore; keyboard shortcuts; WCAG AA contrast for
 every palette color; URL match patterns, what a pin hides and the optional permission; and for
 the Chrome build, namespace detection, popup view detection, message validation, and which
 teardown path runs on `pagehide`.
@@ -437,6 +461,7 @@ before publishing, is in [`chrome_version/README.md`](chrome_version/README.md).
   purpose; only the theme follows across views.
 - **`Ctrl+N` may be intercepted by Firefox** before the extension sees it, depending on
   platform and focus.
+- **Reminders do not repeat.** Each one goes off once and is then cleared.
 - **Firefox for Android is not supported**, since it has no extension sidebar.
 - **The bundle is a single ~750 KiB file** (~235 KiB gzipped): React, ProseMirror and Dexie.
   Code splitting would add nothing, since everything loads from local files.

@@ -473,8 +473,9 @@ try {
     JSON.stringify(permissionState),
   );
   check(
-    'required permissions are still only storage and unlimitedStorage',
-    JSON.stringify(permissionState?.required) === JSON.stringify(['storage', 'unlimitedStorage']),
+    'required permissions are only storage, unlimitedStorage and alarms',
+    JSON.stringify(permissionState?.required) ===
+      JSON.stringify(['storage', 'unlimitedStorage', 'alarms']),
     JSON.stringify(permissionState?.required),
   );
   check('a fresh profile does not hold the tabs permission', permissionState?.hasTabs === false);

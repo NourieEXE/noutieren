@@ -24,7 +24,7 @@ export const DATABASE_NAME = 'colornote-tabs';
  * handler; never edit an existing version block, or installed databases will
  * fail to open. Recorded in the `meta` table and in every backup file.
  */
-export const SCHEMA_VERSION = 4;
+export const SCHEMA_VERSION = 5;
 
 export interface MetaRow {
   key: string;
@@ -87,6 +87,16 @@ export class NoutierenDatabase extends Dexie {
     this.version(4).stores({
       tabs: 'id, position, updatedAt',
       notes: 'id, tabId, [tabId+position], position, updatedAt',
+      contents: 'noteId',
+      meta: 'key',
+      trash: 'noteId, deletedAt',
+    });
+
+    // v5: notes are indexed by `remindAt`, so the reminders that are due or
+    // coming up are one range query. Notes without one are not in the index.
+    this.version(5).stores({
+      tabs: 'id, position, updatedAt',
+      notes: 'id, tabId, [tabId+position], position, updatedAt, remindAt',
       contents: 'noteId',
       meta: 'key',
       trash: 'noteId, deletedAt',

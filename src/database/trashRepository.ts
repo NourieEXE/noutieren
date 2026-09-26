@@ -68,6 +68,8 @@ export async function restoreFromTrash(noteId: string): Promise<NoteMeta | undef
     const id = (await db.notes.get(noteId)) ? createId() : noteId;
 
     const meta: NoteMeta = { ...entry.meta, id, tabId, position };
+    // A reminder that came due while the note was deleted is not shown late.
+    if (meta.remindAt !== undefined && meta.remindAt <= Date.now()) delete meta.remindAt;
     await db.notes.put(meta);
     await db.contents.put({ noteId: id, content: entry.content });
     await db.trash.delete(noteId);

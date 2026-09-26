@@ -69,8 +69,9 @@ worker does something else entirely, below.
 omitted here. `minimum_chrome_version` is `111`, set by `color-mix()` in the
 stylesheet, the newest CSS feature the app uses.
 
-**Same guarantees.** Two permissions (`storage`, `unlimitedStorage`), no host
-permissions, no content scripts, no network access, the same strict CSP. The build
+**Same guarantees.** The same permissions (`storage`, `unlimitedStorage` and
+`alarms`, plus optional `tabs` and `notifications`), no host permissions, no content
+scripts, no network access, the same strict CSP. The build
 is audited by the same script as Firefox: `node scripts/verify-build.mjs --target=chrome`.
 
 ## Why a service worker writes your notes
@@ -170,8 +171,8 @@ on Chromium 151:
 - The **full-page view** renders, is not forced to popup dimensions, and shows the
   same note the popup edits.
 - **Pin to URL is wired correctly and stays inert until it is allowed.** `tabs` is
-  declared optional and not required, the required list is still exactly
-  `storage` and `unlimitedStorage`, a fresh profile does not hold the permission,
+  declared optional and not required, the required list is exactly `storage`,
+  `unlimitedStorage` and `alarms`, a fresh profile does not hold the permission,
   and `chrome.tabs.query` hands back no URL while it is absent. A tab pinned to a
   site that is not open, written straight into IndexedDB so the app has to read a
   pin it did not just create, stays visible, and nothing is reported as hidden.
@@ -199,6 +200,12 @@ The **permission dialog** is browser UI too, so granting `tabs` and watching pin
 start working is a manual step. Everything around the prompt is checked; answering
 it is not. See [Pin to URL](#pin-to-url) for why the prompt is raised from the
 full-page view rather than the popup.
+
+## Reminders
+
+The service worker fires them, with the same code as Firefox's event page. The
+`notifications` permission has the same popup problem as `tabs` below, and the same
+answer: **Allow notifications** opens the full page with `?grant=reminders`, which asks.
 
 ## Pin to URL
 

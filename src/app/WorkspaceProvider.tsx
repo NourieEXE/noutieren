@@ -18,6 +18,7 @@ import {
   moveNoteToTab as moveNoteToTabRow,
   moveNoteWithinTab,
   noteCountsByTab,
+  setNoteReminder,
 } from '../database/notesRepository';
 import { restoreFromTrash } from '../database/trashRepository';
 import { createTab as createTabRow } from '../database/tabsRepository';
@@ -42,7 +43,9 @@ import {
   type PinContext,
 } from '../services/pinVisibility';
 import { useActiveUrl } from '../hooks/useActiveUrl';
-import { detectViewMode, openFullPageEditor } from '../services/webext';
+import { detectViewMode, openFullPageEditor, requestedNoteId } from '../services/webext';
+import { syncReminderAlarms } from '../services/reminders';
+import { formatReminderTime } from '../utils/time';
 
 /**
  * Owns workspace state: live tab/note queries, the current selection, and every
@@ -298,6 +301,15 @@ export function WorkspaceProvider({
     if (previous && previous !== effectiveNoteId) void saveQueue.flush(previous);
   }, [effectiveNoteId]);
 
+  // A reminder notification opens the full page on its note.
+  useEffect(() => {
+    const noteId = requestedNoteId();
+    if (!noteId) return;
+    void getNote(noteId).then((note) => {
+      if (note) revealNote(note.tabId, note.id);
+    });
+  }, [revealNote]);
+
   /* -------------------------------------------------------------- flushing */
 
   const flushSaves = useCallback(async () => {
@@ -370,6 +382,10 @@ export function WorkspaceProvider({
   );
 
   const actions = useMemo<WorkspaceActions>(() => {
+    const resyncAlarms = () => {
+      syncReminderAlarms().catch((error: unknown) => logError('syncReminderAlarms', error));
+    };
+
     const guard = async (context: string, run: () => Promise<void>): Promise<void> => {
       try {
         await run();
@@ -433,7 +449,7 @@ export function WorkspaceProvider({
         // full-page view. Flagged, so that tab leads with the request instead
         // of dropping the user into the editor with no idea why it opened.
         if (!canPromptForPermission(detectViewMode())) {
-          await openFullPageEditor({ forPinGrant: true });
+          await openFullPageEditor({ grant: 'pins' });
           return 'elsewhere';
         }
 
@@ -510,7 +526,9 @@ export function WorkspaceProvider({
                 void (async () => {
                   try {
                     const restored = await restoreFromTrash(id);
-                    if (restored) revealNote(restored.tabId, restored.id);
+                    if (!restored) return;
+                    revealNote(restored.tabId, restored.id);
+                    resyncAlarms();
                   } catch (error) {
                     reportError('restoreFromTrash', error);
                   }
@@ -524,11 +542,24 @@ export function WorkspaceProvider({
         guard('restoreDeletedNote', async () => {
           const restored = await restoreFromTrash(id);
           if (!restored) return;
+          resyncAlarms();
           const tab = await getTab(restored.tabId);
           toasts.push({
             message: `Restored "${restored.title}" to "${tab?.title ?? 'tab'}".`,
             tone: 'success',
             action: { label: 'Open', onAction: () => revealNote(restored.tabId, restored.id) },
+          });
+        }),
+
+      setReminder: (id, at) =>
+        guard('setReminder', async () => {
+          await setNoteReminder(id, at);
+          await syncReminderAlarms();
+          toasts.push({
+            message:
+              at === null ? 'Reminder removed.' : `Reminder set for ${formatReminderTime(at)}.`,
+            tone: 'success',
+            duration: 3000,
           });
         }),
 
@@ -539,7 +570,7 @@ export function WorkspaceProvider({
       refreshAfterBulkChange: () =>
         guard('refreshAfterBulkChange', async () => {
           setReloadKey((key) => key + 1);
-          await Promise.resolve();
+          await syncReminderAlarms();
         }),
     };
   }, [

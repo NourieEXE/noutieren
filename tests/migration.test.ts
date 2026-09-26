@@ -152,6 +152,7 @@ describe('v1 to v2 migration', () => {
     expect(noteIndexes).toContain('tabId');
     expect(noteIndexes).toContain('[tabId+position]');
     expect(noteIndexes).toContain('updatedAt');
+    expect(noteIndexes).toContain('remindAt');
     expect(db.tabs.schema.indexes.map((index) => index.name)).toContain('position');
 
     await db.delete();

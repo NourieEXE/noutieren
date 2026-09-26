@@ -281,6 +281,10 @@ export function parseBackup(text: string): ParsedBackup {
       title: normalizeText(record.title, 'Untitled note'),
       color: normalizeColor(record.color, DEFAULT_NOTE_COLOR),
       ...(notePins.length > 0 ? { urlPatterns: notePins } : {}),
+      // Only future ones: an old backup should not set off a burst of reminders.
+      ...(isValidTimestamp(record.remindAt) && record.remindAt > now
+        ? { remindAt: record.remindAt }
+        : {}),
       // Regenerated from the sanitized document, never trusted from the file,
       // so search can't be poisoned with text the note does not contain.
       plainText: extractPlainText(content),

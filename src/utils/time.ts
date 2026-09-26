@@ -46,3 +46,40 @@ export function isValidTimestamp(value: unknown): value is number {
     value < Date.now() + 1000 * 60 * 60 * 24 * 365 * 50
   );
 }
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function startOfDay(timestamp: number): number {
+  const date = new Date(timestamp);
+  date.setHours(0, 0, 0, 0);
+  return date.getTime();
+}
+
+/** When a reminder is due, from the reader's point of view: "Today, 18:00", "Tomorrow, 09:00", "Mon, 09:00". */
+export function formatReminderTime(timestamp: number, now = Date.now()): string {
+  const time = new Date(timestamp).toLocaleTimeString(undefined, {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+  const days = Math.round((startOfDay(timestamp) - startOfDay(now)) / DAY_MS);
+  if (days === 0) return `Today, ${time}`;
+  if (days === 1) return `Tomorrow, ${time}`;
+  if (days === -1) return `Yesterday, ${time}`;
+  const date = new Date(timestamp);
+  const day =
+    days > 1 && days < 7
+      ? date.toLocaleDateString(undefined, { weekday: 'short' })
+      : date.toLocaleDateString(undefined, {
+          day: 'numeric',
+          month: 'short',
+          ...(date.getFullYear() === new Date(now).getFullYear() ? {} : { year: 'numeric' }),
+        });
+  return `${day}, ${time}`;
+}
+
+/** The `YYYY-MM-DDTHH:mm` a `datetime-local` input reads and writes, in local time. */
+export function toDateTimeLocal(timestamp: number): string {
+  const date = new Date(timestamp);
+  const pad = (value: number) => String(value).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}

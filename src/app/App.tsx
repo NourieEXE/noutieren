@@ -9,7 +9,7 @@ import { TabStrip } from '../components/TabStrip';
 import { NotesPanel } from '../components/NotesPanel';
 import { NoteEditorPane } from '../components/NoteEditorPane';
 import { SettingsMenu } from '../components/SettingsMenu';
-import { PinPermissionBanner } from '../components/PinPermissionBanner';
+import { PermissionBanner } from '../components/PermissionBanner';
 import { HelpDialog } from '../components/HelpDialog';
 import { Icon } from '../components/Icons';
 
@@ -91,7 +91,7 @@ export function App() {
         <SettingsMenu />
       </header>
 
-      <PinPermissionBanner granted={pinStatus.granted} />
+      <PermissionBanner pinsGranted={pinStatus.granted} />
 
       <TabStrip notesPanelId={collapsed ? undefined : notesPanelId} />
 

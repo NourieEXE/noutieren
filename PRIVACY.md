@@ -1,6 +1,6 @@
 # Privacy policy for Noutieren
 
-**Last updated: 4 August 2026**
+**Last updated: 26 September 2026**
 
 Noutieren does not collect, transmit, sell or share any data. There is no server to send
 anything to.
@@ -11,6 +11,8 @@ Everything you type stays in your own Firefox profile on your own device:
 
 - **Your tabs, notes and their formatted content** are stored in this profile's IndexedDB
   database, under the extension's own origin.
+- **Deleted notes**, for 30 days, so they can be restored.
+- **Reminder times** you set, on the note they belong to.
 - **A few interface preferences** (which tab and note you had open, whether the notes list is
   collapsed, your theme, your search scope, and the date of your last backup) are stored in
   `browser.storage.local`.
@@ -27,17 +29,18 @@ Neither is readable by websites you visit, by other extensions, or by the author
 - No content scripts and no host permissions, so the extension cannot see, read or modify the
   _contents_ of any web page you visit, including the page in the tab next to the sidebar.
 
-The extension requests exactly two permissions at install time:
+The extension requests three permissions at install time, none of which shows a prompt:
 
-| Permission         | Why                                                                |
-| ------------------ | ------------------------------------------------------------------ |
-| `storage`          | To save your notes and interface preferences on this device.       |
-| `unlimitedStorage` | So your notes are not capped by the small default extension quota. |
+| Permission         | Why                                                                     |
+| ------------------ | ----------------------------------------------------------------------- |
+| `storage`          | To save your notes and interface preferences on this device.            |
+| `unlimitedStorage` | So your notes are not capped by the small default extension quota.      |
+| `alarms`           | To wake up when a reminder is due. It sets timers and can read nothing. |
 
 Its manifest declares `data_collection_permissions: { required: ["none"] }`, Firefox's formal
 statement that no data is collected.
 
-## Pin to URL, and the one optional permission
+## Pin to URL, and the `tabs` permission
 
 Added in 1.3.0. _Pin to URL_ lets you say that a tab or a note should only appear while a
 particular page is open, for example notes that only show up on YouTube. To do that, Noutieren
@@ -76,6 +79,19 @@ cannot read the _content_ of any page, only the address of the tab, and only whi
 pin-capable view open.
 
 The URL patterns you type are stored with your tabs and notes, and are included in backups.
+
+## Reminders, and the `notifications` permission
+
+Added after 1.3.0. A reminder is a time stored on a note. When it is due, Noutieren shows a
+notification with the note's title and the start of its text.
+
+`notifications` is **optional**. It is asked for the first time you set a reminder, from the
+full-page view on Chrome for the same reason as `tabs`. Declining keeps your reminders; they
+show once you allow it. You can withdraw it in the same places as `tabs`.
+
+The notification is shown by your browser, and depending on your system by the operating
+system's notification centre, which may keep a history of them. Noutieren sends nothing
+anywhere.
 
 ## Backups you create
 

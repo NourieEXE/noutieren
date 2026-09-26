@@ -2,16 +2,19 @@ import type * as WebExtension from 'webextension-polyfill';
 import { applyNotePatch } from '../../src/database/notesRepository';
 import { logError } from '../../src/services/errors';
 import type { PendingWrite } from '../../src/services/teardown';
+import { installReminderHandlers } from '../../src/background/reminders';
 import { parseFlushPending, type FlushPendingResult } from './messages';
 
 /**
  * Chrome MV3 service worker.
  *
- * It exists for one reason: to finish writes a popup could not. Chrome destroys
+ * Its first job is finishing writes a popup could not. Chrome destroys
  * a popup's document the moment it loses focus, taking any open IndexedDB
  * transaction with it, so the popup hands its queue here on the way out and this
  * worker, a separate context with its own connection to the same database,
  * performs the write.
+ *
+ * It also fires reminders, the same code as Firefox's event page.
  *
  * There is no toolbar-click listener, unlike the Firefox build: `default_popup`
  * in the manifest means Chrome opens the popup itself.
@@ -92,4 +95,5 @@ if (typeof chrome !== 'undefined' && chrome) {
   chrome.runtime.onMessage.addListener(
     handleMessage as WebExtension.Runtime.OnMessageListenerCallback,
   );
+  installReminderHandlers(chrome);
 }

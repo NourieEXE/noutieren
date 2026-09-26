@@ -12,9 +12,22 @@ All notable changes to Noutieren. Dates are the build date; versions follow
   where it was, and brings its tab back if that was deleted too. _Delete forever_ and _Empty_
   are there for when you mean it. Reset clears it; exports leave it out.
 
+- **Reminders.** _Note actions → Remind me…_ sets a time, from quick picks or any date and time.
+  When it is due the browser shows a notification, even with Noutieren closed, and clicking it
+  opens the note. Reminders missed while the browser was closed show at the next start.
+- **`notifications`, as an optional permission**, asked for when you set the first reminder.
+  On Chrome the popup hands the prompt to the full-page view, as it does for pins.
+
 ### Changed
 
-- **Database schema version 4.** Adds the `trash` table. No upgrade step.
+- **`alarms` is a required permission.** It shows no prompt, at install or on update, and
+  Firefox does not allow it as optional. `verify-build.mjs` accepts it and `notifications`, and
+  nothing else.
+- **Database schema versions 4 and 5.** v4 adds the `trash` table, v5 an index on `remindAt`.
+  No upgrade steps.
+- **Backups carry reminders** that are still ahead, at format version 1, so 1.3.0 can read them
+  and ignores the field.
+- The Firefox background page now bundles the database code, to fire reminders.
 
 ### Fixed
 
@@ -49,7 +62,7 @@ All notable changes to Noutieren. Dates are the build date; versions follow
   so storing one costs nothing while refusing would discard what you typed. Once a pin exists
   the editor offers **Enable Pin to URL**, which is the only thing that raises the prompt.
   Declining leaves the pins saved and inert, and revoking later leaves your notes intact. See
-  [PRIVACY.md](PRIVACY.md#pin-to-url-and-the-one-optional-permission).
+  [PRIVACY.md](PRIVACY.md#pin-to-url-and-the-tabs-permission).
 
 - **A "show hidden" toggle in the tab strip**, which appears whenever a pin is hiding something
   and reveals all of it in one click. A pin hides, it never deletes.

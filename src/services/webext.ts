@@ -1,4 +1,5 @@
 import type * as WebExtension from 'webextension-polyfill';
+import { isValidId } from '../utils/id';
 
 /**
  * Thin accessor for the WebExtension APIs this extension uses.
@@ -40,19 +41,44 @@ export function extensionUrl(path: string): string {
 export const FULL_PAGE_URL = 'index.html?view=page';
 
 /**
- * Marks a full-page tab opened to grant the `tabs` permission.
- *
- * Chrome's toolbar popup cannot raise a permission dialog (see
- * `canPromptForPermission`), so it sends the user here. Without this flag the
- * tab would open on the ordinary editor with nothing to explain why, which is
- * exactly what it looked like the first time round.
+ * Why a full-page tab was opened to ask for a permission. Chrome's toolbar
+ * popup cannot raise a permission dialog (see `canPromptForPermission`), so it
+ * sends the user here, and the tab leads with the request.
  */
-export const GRANT_PINS_PARAM = 'grant';
-export const GRANT_PINS_VALUE = 'pins';
+export type GrantReason = 'pins' | 'reminders';
+
+const GRANT_PARAM = 'grant';
+const GRANT_REASONS: readonly string[] = ['pins', 'reminders'];
+
+/** Set when a reminder notification opens the full page on its note. */
+const NOTE_PARAM = 'note';
+
+export function requestedGrant(search: string = window.location.search): GrantReason | null {
+  const value = new URLSearchParams(search).get(GRANT_PARAM);
+  return value !== null && GRANT_REASONS.includes(value) ? (value as GrantReason) : null;
+}
 
 /** Whether this document was opened to ask for the pin permission. */
 export function wantsPinPermissionGrant(search: string = window.location.search): boolean {
-  return new URLSearchParams(search).get(GRANT_PINS_PARAM) === GRANT_PINS_VALUE;
+  return requestedGrant(search) === 'pins';
+}
+
+export function requestedNoteId(search: string = window.location.search): string | null {
+  const value = new URLSearchParams(search).get(NOTE_PARAM);
+  return isValidId(value) ? value : null;
+}
+
+export interface FullPageOptions {
+  grant?: GrantReason;
+  noteId?: string;
+}
+
+/** The full-page path, relative to the extension root. */
+export function fullPagePath({ grant, noteId }: FullPageOptions = {}): string {
+  let path = FULL_PAGE_URL;
+  if (grant) path += `&${GRANT_PARAM}=${grant}`;
+  if (noteId) path += `&${NOTE_PARAM}=${encodeURIComponent(noteId)}`;
+  return path;
 }
 
 /**
@@ -63,11 +89,8 @@ export function wantsPinPermissionGrant(search: string = window.location.search)
  * usually absent, and without it the filter can be ignored, which would mean
  * activating an unrelated tab. `tabs.create` needs no permission at all.
  */
-export async function openFullPageEditor({ forPinGrant = false } = {}): Promise<void> {
-  const path = forPinGrant
-    ? `${FULL_PAGE_URL}&${GRANT_PINS_PARAM}=${GRANT_PINS_VALUE}`
-    : FULL_PAGE_URL;
-
+export async function openFullPageEditor(options: FullPageOptions = {}): Promise<void> {
+  const path = fullPagePath(options);
   const api = getBrowserApi();
   if (!api) {
     window.open(path, '_blank', 'noopener');

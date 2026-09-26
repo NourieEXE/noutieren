@@ -206,8 +206,10 @@ export async function duplicateNote(id: string): Promise<Note | undefined> {
     const now = Date.now();
     const last = await tabRange(source.tabId).last();
 
+    // A copy does not inherit the reminder, or it would go off twice.
+    const { remindAt: _remindAt, ...rest } = source;
     const copy: NoteMeta = {
-      ...source,
+      ...rest,
       id: createId(),
       title: `${source.title} (copy)`.slice(0, 200),
       position: last ? last.position + 1 : 0,
@@ -217,6 +219,53 @@ export async function duplicateNote(id: string): Promise<Note | undefined> {
     await db.notes.add(copy);
     await db.contents.put({ noteId: copy.id, content });
     return { ...copy, content };
+  });
+}
+
+/**
+ * Sets or clears a note's reminder. `updatedAt` is left alone: a reminder is
+ * not an edit, and bumping it would look like a conflict to an open editor.
+ */
+export async function setNoteReminder(
+  noteId: string,
+  remindAt: number | null,
+): Promise<NoteMeta | undefined> {
+  const db = getDatabase();
+  return db.transaction('rw', db.notes, async () => {
+    const note = await db.notes.get(noteId);
+    if (!note) return undefined;
+    const next: NoteMeta = { ...note };
+    if (remindAt === null) delete next.remindAt;
+    else next.remindAt = remindAt;
+    await db.notes.put(next);
+    return next;
+  });
+}
+
+/** Every note with a reminder, soonest first. */
+export async function listReminders(): Promise<NoteMeta[]> {
+  return getDatabase().notes.orderBy('remindAt').toArray();
+}
+
+/** Alarms can fire a little early; this much early still counts as due. */
+const DUE_TOLERANCE_MS = 60 * 1000;
+
+/**
+ * Clears a reminder that has come due and returns the note as it was, so it is
+ * shown once. `undefined` when it is not due: moved later, removed, or the note
+ * is gone.
+ */
+export async function takeDueReminder(
+  noteId: string,
+  now = Date.now(),
+): Promise<NoteMeta | undefined> {
+  const db = getDatabase();
+  return db.transaction('rw', db.notes, async () => {
+    const note = await db.notes.get(noteId);
+    if (note?.remindAt === undefined || note.remindAt > now + DUE_TOLERANCE_MS) return undefined;
+    const { remindAt: _remindAt, ...rest } = note;
+    await db.notes.put(rest);
+    return note;
   });
 }
 

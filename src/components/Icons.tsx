@@ -38,6 +38,7 @@ export type IconName =
   | 'moveTo'
   | 'warning'
   | 'note'
+  | 'bell'
   | 'pin'
   | 'pinOff';
 
@@ -217,6 +218,12 @@ const PATHS: Record<IconName, React.ReactNode> = {
     <>
       <rect x="2.5" y="2.5" width="11" height="11" rx="2" {...STROKE} />
       <path d="M5.5 6h5M5.5 8.5h5M5.5 11h3" {...STROKE} />
+    </>
+  ),
+  bell: (
+    <>
+      <path d="M4 11.5V7a4 4 0 0 1 8 0v4.5l1 1H3z" {...STROKE} />
+      <path d="M6.5 13.5a1.5 1.5 0 0 0 3 0" {...STROKE} />
     </>
   ),
   pin: (

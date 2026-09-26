@@ -722,6 +722,17 @@ body {
   text-align: right;
 }
 
+.note-row__when {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.note-row__reminder {
+  display: inline-flex;
+  color: var(--fg-muted);
+}
+
 /* ----------------------------------------------------------- editor panel */
 
 .editor-pane {
@@ -778,11 +789,30 @@ body {
 
 .editor-pane__footer {
   display: flex;
-  gap: var(--space-4);
+  flex-wrap: wrap;
+  gap: 2px var(--space-4);
   padding: 6px var(--space-2);
   border-top: 1px solid var(--border);
   color: var(--fg-subtle);
   font-size: 12px;
+}
+
+.editor-pane__reminder {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--fg-muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.editor-pane__reminder:hover {
+  color: var(--fg);
+  text-decoration: underline;
 }
 
 .editor-pane__loading {
@@ -1262,6 +1292,20 @@ img.ProseMirror-separator {
 
 .option-list__button:hover {
   background: var(--bg-hover);
+}
+
+.option-list__hint {
+  margin-left: auto;
+  color: var(--fg-subtle);
+  font-size: 12px;
+}
+
+.reminder__notice {
+  margin-bottom: var(--space-3);
+}
+
+.reminder__custom {
+  margin-top: var(--space-3);
 }
 
 .trash-list {

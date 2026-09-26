@@ -5,7 +5,7 @@ import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import { useVirtualRows } from '../hooks/useVirtualRows';
 import { runSearch } from '../services/workspaceService';
 import { previewText } from '../editor/document';
-import { formatAbsoluteTime, formatRelativeTime } from '../utils/time';
+import { formatAbsoluteTime, formatRelativeTime, formatReminderTime } from '../utils/time';
 import { withAlpha } from '../utils/colors';
 import type { NoteMeta, SearchResult } from '../types';
 import { Icon } from './Icons';
@@ -203,12 +203,23 @@ function NoteRow({
               {tabLabel}
             </span>
           ) : null}
-          <time
-            dateTime={new Date(note.updatedAt).toISOString()}
-            title={formatAbsoluteTime(note.updatedAt)}
-          >
-            {formatRelativeTime(note.updatedAt)}
-          </time>
+          <span className="note-row__when">
+            {note.remindAt !== undefined ? (
+              <span
+                className="note-row__reminder"
+                title={`Reminder: ${formatReminderTime(note.remindAt)}`}
+              >
+                <Icon name="bell" size={12} />
+                <span className="visually-hidden">Reminder set. </span>
+              </span>
+            ) : null}
+            <time
+              dateTime={new Date(note.updatedAt).toISOString()}
+              title={formatAbsoluteTime(note.updatedAt)}
+            >
+              {formatRelativeTime(note.updatedAt)}
+            </time>
+          </span>
         </span>
       </button>
     </div>

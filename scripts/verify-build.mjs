@@ -113,18 +113,19 @@ if (manifest) {
   if (/unsafe-eval|unsafe-inline/.test(csp))
     fail('extension_pages CSP must not allow unsafe-eval or unsafe-inline.');
 
-  // The required list is what users see at install and stays at exactly two.
-  // `tabs` is optional and requested at runtime, so moving it into
+  // The required list stays at permissions that show no prompt. `alarms` is
+  // there because Firefox will not take it as optional. `tabs` and
+  // `notifications` are asked for at runtime, so moving either into
   // `permissions` must fail this check rather than pass it.
   const permissions = manifest.permissions ?? [];
-  const allowed = new Set(['storage', 'unlimitedStorage']);
+  const allowed = new Set(['storage', 'unlimitedStorage', 'alarms']);
   for (const permission of permissions) {
     if (!allowed.has(permission)) fail(`unexpected required permission: ${permission}`);
   }
   if (!permissions.includes('unlimitedStorage')) fail('manifest should request unlimitedStorage.');
 
   const optional = manifest.optional_permissions ?? [];
-  const allowedOptional = new Set(['tabs']);
+  const allowedOptional = new Set(['tabs', 'notifications']);
   for (const permission of optional) {
     if (!allowedOptional.has(permission)) fail(`unexpected optional permission: ${permission}`);
   }

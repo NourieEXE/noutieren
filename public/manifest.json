@@ -12,8 +12,8 @@
       }
     }
   },
-  "permissions": ["storage", "unlimitedStorage"],
-  "optional_permissions": ["tabs"],
+  "permissions": ["storage", "unlimitedStorage", "alarms"],
+  "optional_permissions": ["tabs", "notifications"],
   "action": {
     "default_title": "Open Noutieren sidebar",
     "default_icon": {

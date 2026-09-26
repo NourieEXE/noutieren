@@ -42,6 +42,8 @@ export interface NoteMeta {
   updatedAt: number;
   /** When set and non-empty, this note is only shown on matching pages. */
   urlPatterns?: UrlPatterns;
+  /** When a reminder is due. Absent when there is none, and cleared once shown. */
+  remindAt?: number;
 }
 
 /** The rich-text document for a note, stored separately from its metadata. */
