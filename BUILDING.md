@@ -6,12 +6,12 @@ minified, so this file explains how to regenerate it.
 
 ## Environment
 
-|                  |                                                                  |
-| ---------------- | ---------------------------------------------------------------- |
-| Operating system | Any (developed on Linux)                                         |
-| Node.js          | 22 or newer, see `.nvmrc`. The published build used Node 26.5.0. |
-| npm              | 10 or newer (npm 12.0.1 was used)                                |
-| Network          | Needed only for `npm ci`                                         |
+|                  |                                                                   |
+| ---------------- | ----------------------------------------------------------------- |
+| Operating system | Any (developed on Linux)                                          |
+| Node.js          | 22 or newer, see `.nvmrc`. The published build used Node 26.10.0. |
+| npm              | 10 or newer (npm 12.1.0 was used)                                 |
+| Network          | Needed only for `npm ci`                                          |
 
 No global tooling is required; every build dependency is in `package.json`.
 

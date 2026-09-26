@@ -5,6 +5,8 @@ All notable changes to Noutieren. Dates are the build date; versions follow
 
 ## Unreleased
 
+## 1.4.0 - 2026-09-26
+
 ### Added
 
 - **Recently deleted.** Deleting a note, or a tab with notes in it, moves the notes to

@@ -82,7 +82,7 @@ The URL patterns you type are stored with your tabs and notes, and are included 
 
 ## Reminders, and the `notifications` permission
 
-Added after 1.3.0. A reminder is a time stored on a note. When it is due, Noutieren shows a
+Added in 1.4.0. A reminder is a time stored on a note. When it is due, Noutieren shows a
 notification with the note's title and the start of its text.
 
 `notifications` is **optional**. It is asked for the first time you set a reminder, from the

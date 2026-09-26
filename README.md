@@ -226,7 +226,7 @@ files, source maps, remote references and dynamic code.
 npm run package
 ```
 
-Creates **`web-ext-artifacts/noutieren-1.3.0.zip`** (about 237 KB). Source maps are
+Creates **`web-ext-artifacts/noutieren-1.4.0.zip`** (about 280 KB). Source maps are
 excluded and no development files are included.
 
 ## Installing permanently (signing)
