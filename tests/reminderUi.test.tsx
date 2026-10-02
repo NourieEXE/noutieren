@@ -18,6 +18,7 @@ const { ensureSeeded } = await import('../src/services/workspaceService');
 const { openDatabase } = await import('../src/database/db');
 const { createTab } = await import('../src/database/tabsRepository');
 const { createNote, getNote, setNoteReminder } = await import('../src/database/notesRepository');
+const { getDatabase } = await import('../src/database/db');
 const { reminderName, reminderPresets } = await import('../src/services/reminders');
 
 const events = () => ({ addListener: vi.fn(), removeListener: vi.fn() });
@@ -34,6 +35,11 @@ function stubExtension({ notifications }: { notifications: boolean }) {
       onAdded: events(),
       onRemoved: events(),
     },
+    action: {
+      setBadgeText: vi.fn(() => Promise.resolve()),
+      setBadgeBackgroundColor: vi.fn(() => Promise.resolve()),
+    },
+    notifications: { clear: vi.fn(() => Promise.resolve(true)) },
     alarms: {
       create: vi.fn(() => Promise.resolve()),
       clear: vi.fn(() => Promise.resolve(true)),
@@ -196,5 +202,88 @@ describe('opening a reminder', () => {
     await waitFor(() =>
       expect(screen.getByRole('textbox', { name: 'Note title' })).toHaveValue('Send the invoice'),
     );
+  });
+});
+
+describe('seeing a reminder', () => {
+  const MINUTE = 60 * 1000;
+
+  async function noteThatWentOff(title: string, { shown = true } = {}) {
+    const tab = await createTab({ title: 'Life' });
+    const note = await createNote({ tabId: tab.id, title });
+    const at = Date.now() - 10 * MINUTE;
+    await setNoteReminder(note.id, at);
+    if (shown) await getDatabase().notes.update(note.id, { reminderShownAt: at });
+    return { tab, note };
+  }
+
+  it('happens when its note is opened, which stops the repeats and clears the badge', async () => {
+    const api = stubExtension({ notifications: true });
+    const { tab, note } = await noteThatWentOff('Dentist');
+
+    await renderApp(tab.id);
+
+    await waitFor(async () => expect((await getNote(note.id))?.remindAt).toBeUndefined());
+    expect(api.notifications.clear).toHaveBeenCalledWith(reminderName(note.id));
+    expect(api.action.setBadgeText).toHaveBeenLastCalledWith({ text: '' });
+  });
+
+  it('does not happen in a tab that is not on screen', async () => {
+    stubExtension({ notifications: true });
+    const { tab, note } = await noteThatWentOff('Dentist');
+    const visibility = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
+
+    await renderApp(tab.id);
+    await screen.findByRole('textbox', { name: 'Note title' });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect((await getNote(note.id))?.remindAt).toBeDefined();
+    visibility.mockRestore();
+  });
+
+  it('happens on opening a due note when notifications are off, since it never went off', async () => {
+    stubExtension({ notifications: false });
+    const { tab, note } = await noteThatWentOff('Dentist', { shown: false });
+
+    await renderApp(tab.id);
+
+    await waitFor(async () => expect((await getNote(note.id))?.remindAt).toBeUndefined());
+  });
+
+  it('is still waiting for other notes, whose bells say so', async () => {
+    stubExtension({ notifications: true });
+    const tab = await createTab({ title: 'Life' });
+    // First in the list, so it is the one that opens.
+    await createNote({ tabId: tab.id, title: 'Open one' });
+    const waiting = await createNote({ tabId: tab.id, title: 'Waiting' });
+    const at = Date.now() - 10 * MINUTE;
+    await setNoteReminder(waiting.id, at);
+    await getDatabase().notes.update(waiting.id, { reminderShownAt: at });
+
+    await renderApp(tab.id);
+
+    expect(await screen.findByText('Reminder due.')).toBeInTheDocument();
+    expect((await getNote(waiting.id))?.remindAt).toBe(at);
+  });
+});
+
+describe('the repeat setting', () => {
+  it('is saved and reschedules the alarms', async () => {
+    const api = stubExtension({ notifications: true });
+    const tab = await createTab({ title: 'Life' });
+    await createNote({ tabId: tab.id, title: 'Dentist' });
+    const { user } = await renderApp(tab.id);
+
+    const dialog = await openReminderDialog(user);
+    const select = within(dialog).getByLabelText('If you miss it');
+    expect(select).toHaveValue('5');
+    await user.selectOptions(select, 'Remind me again every 10 minutes');
+
+    await waitFor(() =>
+      expect(api.storage.local.set).toHaveBeenCalledWith({
+        preferences: expect.objectContaining({ reminderRepeatMinutes: 10 }) as unknown,
+      }),
+    );
+    expect(api.alarms.getAll).toHaveBeenCalled();
   });
 });

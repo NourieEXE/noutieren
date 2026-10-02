@@ -14,7 +14,8 @@ Everything you type stays in your own Firefox profile on your own device:
 - **Deleted notes**, for 30 days, so they can be restored.
 - **Reminder times** you set, on the note they belong to.
 - **A few interface preferences** (which tab and note you had open, whether the notes list is
-  collapsed, your theme, your search scope, and the date of your last backup) are stored in
+  collapsed, your theme, your search scope, how often reminders repeat, and the date of your
+  last backup) are stored in
   `browser.storage.local`. After an update, so is the version you updated from, until you
   dismiss the notice about it.
 

@@ -65,6 +65,7 @@ describe('sanitizePreferences', () => {
       searchAllTabs: true,
       lastExportedAt: 1750000000000,
       showHiddenPins: true,
+      reminderRepeatMinutes: 10,
     });
     expect(result).toEqual({
       selectedTabId: 'tab-1',
@@ -74,7 +75,15 @@ describe('sanitizePreferences', () => {
       searchAllTabs: true,
       lastExportedAt: 1750000000000,
       showHiddenPins: true,
+      reminderRepeatMinutes: 10,
     });
+  });
+
+  it('only accepts the repeat intervals the dialog offers, defaulting to five minutes', () => {
+    expect(sanitizePreferences({ reminderRepeatMinutes: 0 }).reminderRepeatMinutes).toBe(0);
+    expect(sanitizePreferences({ reminderRepeatMinutes: 7 }).reminderRepeatMinutes).toBe(5);
+    expect(sanitizePreferences({ reminderRepeatMinutes: '10' }).reminderRepeatMinutes).toBe(5);
+    expect(sanitizePreferences({}).reminderRepeatMinutes).toBe(5);
   });
 
   it('treats the pin override as a real boolean', () => {
@@ -103,6 +112,7 @@ describe('sanitizePreferences', () => {
     expect(Object.keys(result).sort()).toEqual([
       'lastExportedAt',
       'notesPanelCollapsed',
+      'reminderRepeatMinutes',
       'searchAllTabs',
       'selectedNoteId',
       'selectedTabId',

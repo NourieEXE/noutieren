@@ -435,10 +435,12 @@ body {
 
 /* ------------------------------------------------------------------ shell */
 
+/* A column rather than a grid with fixed rows, so notices and banners above the
+   tab strip can come and go without the rows shifting. */
 .app {
   container-type: inline-size;
-  display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr);
+  display: flex;
+  flex-direction: column;
   height: 100%;
   min-width: 0;
   background: var(--bg-page);
@@ -554,6 +556,7 @@ body {
 /* -------------------------------------------------------------- workspace */
 
 .workspace {
+  flex: 1 1 0;
   display: grid;
   grid-template-rows: minmax(120px, 38%) minmax(0, 1fr);
   min-height: 0;
@@ -731,6 +734,10 @@ body {
 .note-row__reminder {
   display: inline-flex;
   color: var(--fg-muted);
+}
+
+.note-row__reminder--due {
+  color: var(--danger);
 }
 
 /* ----------------------------------------------------------- editor panel */

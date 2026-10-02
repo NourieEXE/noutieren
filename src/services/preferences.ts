@@ -22,7 +22,11 @@ export const DEFAULT_PREFERENCES: AppPreferences = {
   searchAllTabs: false,
   lastExportedAt: null,
   showHiddenPins: false,
+  reminderRepeatMinutes: 5,
 };
+
+/** The choices offered; anything else in storage falls back to the default. */
+export const REMINDER_REPEAT_MINUTES: readonly number[] = [0, 2, 5, 10, 15];
 
 const THEMES: readonly ThemePreference[] = ['system', 'light', 'dark'];
 
@@ -40,6 +44,9 @@ export function sanitizePreferences(value: unknown): AppPreferences {
     searchAllTabs: source.searchAllTabs === true,
     lastExportedAt: isValidTimestamp(source.lastExportedAt) ? source.lastExportedAt : null,
     showHiddenPins: source.showHiddenPins === true,
+    reminderRepeatMinutes: REMINDER_REPEAT_MINUTES.includes(source.reminderRepeatMinutes as number)
+      ? (source.reminderRepeatMinutes as number)
+      : DEFAULT_PREFERENCES.reminderRepeatMinutes,
   };
 }
 

@@ -207,7 +207,7 @@ export async function duplicateNote(id: string): Promise<Note | undefined> {
     const last = await tabRange(source.tabId).last();
 
     // A copy does not inherit the reminder, or it would go off twice.
-    const { remindAt: _remindAt, ...rest } = source;
+    const { remindAt: _remindAt, reminderShownAt: _shownAt, ...rest } = source;
     const copy: NoteMeta = {
       ...rest,
       id: createId(),
@@ -223,8 +223,9 @@ export async function duplicateNote(id: string): Promise<Note | undefined> {
 }
 
 /**
- * Sets or clears a note's reminder. `updatedAt` is left alone: a reminder is
- * not an edit, and bumping it would look like a conflict to an open editor.
+ * Sets or clears a note's reminder, which also forgets that it went off.
+ * `updatedAt` is left alone: a reminder is not an edit, and bumping it would
+ * look like a conflict to an open editor.
  */
 export async function setNoteReminder(
   noteId: string,
@@ -234,9 +235,8 @@ export async function setNoteReminder(
   return db.transaction('rw', db.notes, async () => {
     const note = await db.notes.get(noteId);
     if (!note) return undefined;
-    const next: NoteMeta = { ...note };
-    if (remindAt === null) delete next.remindAt;
-    else next.remindAt = remindAt;
+    const { remindAt: _remindAt, reminderShownAt: _shownAt, ...rest } = note;
+    const next: NoteMeta = remindAt === null ? rest : { ...rest, remindAt };
     await db.notes.put(next);
     return next;
   });
@@ -247,24 +247,21 @@ export async function listReminders(): Promise<NoteMeta[]> {
   return getDatabase().notes.orderBy('remindAt').toArray();
 }
 
-/** Alarms can fire a little early; this much early still counts as due. */
-const DUE_TOLERANCE_MS = 60 * 1000;
-
 /**
- * Clears a reminder that has come due and returns the note as it was, so it is
- * shown once. `undefined` when it is not due: moved later, removed, or the note
- * is gone.
+ * Records that a reminder went off, if `shouldShow` agrees, and returns the
+ * note as it was. Checked and written in one transaction, so two alarms
+ * firing together cannot both show it.
  */
-export async function takeDueReminder(
+export async function markReminderShown(
   noteId: string,
-  now = Date.now(),
+  now: number,
+  shouldShow: (note: NoteMeta) => boolean,
 ): Promise<NoteMeta | undefined> {
   const db = getDatabase();
   return db.transaction('rw', db.notes, async () => {
     const note = await db.notes.get(noteId);
-    if (note?.remindAt === undefined || note.remindAt > now + DUE_TOLERANCE_MS) return undefined;
-    const { remindAt: _remindAt, ...rest } = note;
-    await db.notes.put(rest);
+    if (!note || !shouldShow(note)) return undefined;
+    await db.notes.put({ ...note, reminderShownAt: now });
     return note;
   });
 }

@@ -40,6 +40,8 @@ export interface WorkspaceActions {
   restoreDeletedNote: (id: string) => Promise<void>;
   /** Sets a reminder, or clears it with `null`. Never prompts; the dialog does. */
   setReminder: (id: string, at: number | null) => Promise<void>;
+  /** The reminder has been seen: stop repeating it and take it off the badge. */
+  acknowledgeReminder: (id: string) => Promise<void>;
   /** Debounced through the autosave queue. */
   updateNoteContent: (id: string, content: JSONContent, plainText: string) => void;
 

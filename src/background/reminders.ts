@@ -1,7 +1,15 @@
-import { takeDueReminder } from '../database/notesRepository';
+import { markReminderShown } from '../database/notesRepository';
 import { previewText } from '../editor/document';
 import { logError } from '../services/errors';
-import { noteIdFromReminderName, reminderName, syncReminderAlarms } from '../services/reminders';
+import { loadPreferences } from '../services/preferences';
+import {
+  acknowledgeReminder,
+  noteIdFromReminderName,
+  refreshReminderBadge,
+  reminderName,
+  shouldShowReminder,
+  syncReminderAlarms,
+} from '../services/reminders';
 import { fullPagePath, type BrowserApi } from '../services/webext';
 import { formatReminderTime } from '../utils/time';
 
@@ -9,21 +17,28 @@ import { formatReminderTime } from '../utils/time';
 const LATE_MS = 5 * 60 * 1000;
 
 /**
- * Shows a due reminder and clears it. Without the notifications permission it
- * is left due, and shown once the permission is granted.
+ * Shows a reminder that should go off now. Without the notifications
+ * permission nothing is recorded, so it goes off once the permission is
+ * granted; the badge counts it either way.
  */
 export async function showReminder(
   api: BrowserApi,
   noteId: string,
-  now = Date.now(),
+  now: number,
+  repeatMinutes: number,
 ): Promise<boolean> {
   if (!api.notifications) return false;
-  const note = await takeDueReminder(noteId, now);
+  const note = await markReminderShown(noteId, now, (candidate) =>
+    shouldShowReminder(candidate, now, repeatMinutes),
+  );
   if (note?.remindAt === undefined) return false;
 
+  const name = reminderName(note.id);
   const preview = previewText(note.plainText, 120);
   const late = now - note.remindAt > LATE_MS;
-  await api.notifications.create(reminderName(note.id), {
+  // Cleared first, so a repeat alerts again instead of quietly replacing it.
+  await api.notifications.clear(name);
+  await api.notifications.create(name, {
     type: 'basic',
     iconUrl: api.runtime.getURL('icons/icon-128.png'),
     title: note.title,
@@ -34,18 +49,32 @@ export async function showReminder(
   return true;
 }
 
-/** Rebuilds the alarms and shows whatever came due while nothing was running. */
-export async function catchUpOnReminders(api: BrowserApi, now = Date.now()): Promise<void> {
-  for (const noteId of await syncReminderAlarms(api, now)) {
-    await showReminder(api, noteId, now);
+/**
+ * Shows whatever should go off now, schedules the rest, and updates the
+ * badge. Runs on startup, on every reminder alarm, and when notifications are
+ * allowed.
+ */
+export async function catchUpOnReminders(
+  api: BrowserApi,
+  now = Date.now(),
+  repeatMinutes?: number,
+): Promise<void> {
+  const repeat = repeatMinutes ?? (await loadPreferences()).reminderRepeatMinutes;
+  const due = await syncReminderAlarms({ api, now, repeatMinutes: repeat });
+  let shown = false;
+  for (const noteId of due) {
+    if (await showReminder(api, noteId, now, repeat)) shown = true;
   }
+  // Those just shown now have a repeat to schedule.
+  if (shown) await syncReminderAlarms({ api, now, repeatMinutes: repeat });
+  await refreshReminderBadge(api, now);
 }
 
-/** Opens the note in the full-page view. A notification cannot open the sidebar. */
+/** Clicking a notification counts as seeing it, and opens the note. */
 export async function openReminder(api: BrowserApi, notificationId: string): Promise<void> {
   const noteId = noteIdFromReminderName(notificationId);
   if (!noteId) return;
-  await api.notifications.clear(notificationId);
+  await acknowledgeReminder(noteId, api);
   await api.tabs.create({ url: api.runtime.getURL(fullPagePath({ noteId })) });
 }
 
@@ -60,25 +89,31 @@ export function installReminderHandlers(api: BrowserApi): void {
 
   api.runtime.onStartup.addListener(catchUp);
   api.runtime.onInstalled.addListener(catchUp);
-
   api.alarms.onAlarm.addListener((alarm) => {
-    const noteId = noteIdFromReminderName(alarm.name);
-    if (noteId) void showReminder(api, noteId).catch(report('reminders.show'));
+    if (noteIdFromReminderName(alarm.name)) catchUp();
   });
 
-  // `notifications` only exists once granted, so its listener may have to
+  // `notifications` only exists once granted, so its listeners may have to
   // wait for the grant. Granting also shows anything that was held back.
   let listening = false;
-  const listenForClicks = () => {
+  const listenToNotifications = () => {
     if (listening || !api.notifications) return;
     listening = true;
     api.notifications.onClicked.addListener((id) => {
       void openReminder(api, id).catch(report('reminders.open'));
     });
+    // Dismissed by the user counts as seen. Firefox does not say who closed
+    // one, and closes them on its own after a few seconds, so only `true` counts.
+    api.notifications.onClosed.addListener((id, byUser) => {
+      const noteId = noteIdFromReminderName(id);
+      if (noteId && byUser === true) {
+        void acknowledgeReminder(noteId, api).catch(report('reminders.dismiss'));
+      }
+    });
   };
-  listenForClicks();
+  listenToNotifications();
   api.permissions.onAdded.addListener(() => {
-    listenForClicks();
+    listenToNotifications();
     catchUp();
   });
 }

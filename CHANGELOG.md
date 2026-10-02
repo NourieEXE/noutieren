@@ -12,6 +12,23 @@ All notable changes to Noutieren. Dates are the build date; versions follow
   sidebar or popup links to it until dismissed; a fresh install shows nothing. The background
   records the version updated from on `runtime.onInstalled`. A test fails if `CHANGELOG.md` and
   the release notes disagree, or if the version being built has no notes.
+- **Reminders repeat until seen.** A reminder that has gone off stays until its note is opened,
+  its notification is clicked or dismissed, or it is removed. Until then it goes off again every
+  2, 5, 10 or 15 minutes (5 by default, set under _If you miss it_ in the reminder dialog) for up
+  to an hour.
+- **A count on the toolbar button** of reminders waiting to be seen, and a red bell on their
+  notes in the list. Both work without the notifications permission.
+
+### Changed
+
+- A reminder is no longer cleared when it is shown. Notes carry `reminderShownAt` alongside
+  `remindAt`; both are cleared when the reminder is seen. No schema change.
+
+### Fixed
+
+- The app's layout was a grid with one row per child, so any line shown above the tab strip,
+  such as the full-page permission banner, shifted the rows and stretched the tab strip. It is a
+  column now.
 
 ## 1.4.0 - 2026-09-26
 

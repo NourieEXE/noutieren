@@ -1,7 +1,13 @@
 import { useId, useState } from 'react';
 import { useWorkspace } from '../hooks/workspaceContext';
 import { canPromptForPermission } from '../services/activeTabUrl';
-import { reminderPresets, requestNotificationPermission } from '../services/reminders';
+import {
+  reminderPresets,
+  requestNotificationPermission,
+  syncReminderAlarms,
+} from '../services/reminders';
+import { REMINDER_REPEAT_MINUTES } from '../services/preferences';
+import { logError } from '../services/errors';
 import { detectViewMode, openFullPageEditor } from '../services/webext';
 import { formatReminderTime, toDateTimeLocal } from '../utils/time';
 import type { NoteMeta } from '../types';
@@ -19,7 +25,8 @@ export function ReminderDialog({
   granted: boolean;
   onClose: () => void;
 }) {
-  const { actions } = useWorkspace();
+  const { actions, preferences, updatePreferences } = useWorkspace();
+  const repeatId = useId();
   const [now] = useState(() => Date.now());
   const [custom, setCustom] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -139,6 +146,34 @@ export function ReminderDialog({
             {error}
           </p>
         ) : null}
+      </div>
+      <div className="field reminder__custom">
+        <label className="field__label" htmlFor={repeatId}>
+          If you miss it
+        </label>
+        <select
+          id={repeatId}
+          className="input"
+          value={preferences.reminderRepeatMinutes}
+          onChange={(event) => {
+            const minutes = Number(event.target.value);
+            updatePreferences({ reminderRepeatMinutes: minutes });
+            syncReminderAlarms({ repeatMinutes: minutes }).catch((error: unknown) =>
+              logError('syncReminderAlarms', error),
+            );
+          }}
+        >
+          {REMINDER_REPEAT_MINUTES.map((minutes) => (
+            <option key={minutes} value={minutes}>
+              {minutes === 0
+                ? 'Do not remind me again'
+                : `Remind me again every ${minutes} minutes`}
+            </option>
+          ))}
+        </select>
+        <p className="field__hint">
+          For every reminder. Stops after an hour, or when you open the note.
+        </p>
       </div>
     </Dialog>
   );

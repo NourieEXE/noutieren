@@ -8,16 +8,21 @@ import {
   getNote,
   listReminders,
   setNoteReminder,
-  takeDueReminder,
+  markReminderShown,
 } from '../src/database/notesRepository';
 import { restoreFromTrash } from '../src/database/trashRepository';
 import { parseBackup } from '../src/services/backupService';
+import { getDatabase } from '../src/database/db';
 import {
+  nextReminderTime,
   noteIdFromReminderName,
+  refreshReminderBadge,
   reminderName,
   reminderPresets,
+  shouldShowReminder,
   syncReminderAlarms,
 } from '../src/services/reminders';
+import type { NoteMeta } from '../src/types';
 import {
   catchUpOnReminders,
   installReminderHandlers,
@@ -54,11 +59,15 @@ function fakeApi({ notifications = true } = {}) {
     added: [] as (() => void)[],
     startup: [] as (() => void)[],
     installed: [] as (() => void)[],
+    closed: [] as ((id: string, byUser: boolean) => void)[],
   };
   const notificationsApi = {
     create: vi.fn((id: string) => Promise.resolve(id)),
     clear: vi.fn(() => Promise.resolve(true)),
     onClicked: { addListener: (listener: (id: string) => void) => on.click.push(listener) },
+    onClosed: {
+      addListener: (listener: (id: string, byUser: boolean) => void) => on.closed.push(listener),
+    },
   };
   const raw = {
     runtime: {
@@ -82,6 +91,10 @@ function fakeApi({ notifications = true } = {}) {
     notifications: notifications ? notificationsApi : undefined,
     permissions: { onAdded: { addListener: (listener: () => void) => on.added.push(listener) } },
     tabs: { create: vi.fn(() => Promise.resolve({})) },
+    action: {
+      setBadgeText: vi.fn(() => Promise.resolve()),
+      setBadgeBackgroundColor: vi.fn(() => Promise.resolve()),
+    },
   };
   return { api: raw as unknown as BrowserApi, raw, alarms, on, notificationsApi };
 }
@@ -135,8 +148,11 @@ describe('storing a reminder', () => {
     expect((await setNoteReminder(note.id, at))?.remindAt).toBe(at);
     expect((await getNote(note.id))?.updatedAt).toBe(note.updatedAt);
 
+    await getDatabase().notes.update(note.id, { reminderShownAt: at });
     await setNoteReminder(note.id, null);
-    expect('remindAt' in (await getNote(note.id))!).toBe(false);
+    const cleared = (await getNote(note.id))!;
+    expect('remindAt' in cleared).toBe(false);
+    expect('reminderShownAt' in cleared).toBe(false);
     expect(await setNoteReminder('missing', at)).toBeUndefined();
   });
 
@@ -169,7 +185,6 @@ describe('storing a reminder', () => {
     await setNoteReminder(past.id, Date.now() + MINUTE);
     await deleteNote(future.id);
     await deleteNote(past.id);
-    const { getDatabase } = await import('../src/database/db');
     await getDatabase().trash.update(past.id, { 'meta.remindAt': Date.now() - HOUR });
 
     expect((await restoreFromTrash(future.id))?.remindAt).toBe(at);
@@ -201,32 +216,59 @@ describe('storing a reminder', () => {
   });
 });
 
-describe('taking a due reminder', () => {
-  it('returns the note once and clears the reminder', async () => {
-    const note = await seedNote();
-    const at = Date.now() - MINUTE;
-    await setNoteReminder(note.id, at);
-
-    expect((await takeDueReminder(note.id))?.remindAt).toBe(at);
-    expect((await getNote(note.id))?.remindAt).toBeUndefined();
-    expect(await takeDueReminder(note.id)).toBeUndefined();
+describe('when a reminder goes off', () => {
+  const at = new Date(2026, 8, 23, 9, 0).getTime();
+  const note = (shownAt?: number): NoteMeta => ({
+    id: 'n',
+    tabId: 't',
+    title: 'Note',
+    color: '#64748b',
+    plainText: '',
+    position: 0,
+    createdAt: 1,
+    updatedAt: 1,
+    remindAt: at,
+    ...(shownAt === undefined ? {} : { reminderShownAt: shownAt }),
   });
 
-  it('leaves a reminder that is not due yet', async () => {
-    const note = await seedNote();
-    const at = Date.now() + HOUR;
-    await setNoteReminder(note.id, at);
+  it('goes off at its time, then again every few minutes for an hour', () => {
+    expect(nextReminderTime(note(), at - HOUR, 5)).toBe(at);
+    expect(shouldShowReminder(note(), at - HOUR, 5)).toBe(false);
+    expect(shouldShowReminder(note(), at, 5)).toBe(true);
 
-    expect(await takeDueReminder(note.id)).toBeUndefined();
-    expect((await getNote(note.id))?.remindAt).toBe(at);
+    expect(shouldShowReminder(note(at), at + 2 * MINUTE, 5)).toBe(false);
+    expect(nextReminderTime(note(at), at + 2 * MINUTE, 5)).toBe(at + 5 * MINUTE);
+    expect(shouldShowReminder(note(at), at + 5 * MINUTE, 5)).toBe(true);
+
+    expect(nextReminderTime(note(at + 55 * MINUTE), at + 56 * MINUTE, 5)).toBe(at + HOUR);
+    expect(nextReminderTime(note(at + HOUR), at + HOUR, 5)).toBeNull();
+  });
+
+  it('goes off once when repeats are off', () => {
+    expect(shouldShowReminder(note(), at, 0)).toBe(true);
+    expect(nextReminderTime(note(at), at + 10 * MINUTE, 0)).toBeNull();
+  });
+
+  it('records the time, once per turn', async () => {
+    const seeded = await seedNote();
+    const now = Date.now();
+    await setNoteReminder(seeded.id, now - MINUTE);
+    const show = (candidate: NoteMeta) => shouldShowReminder(candidate, now, 5);
+
+    expect(await markReminderShown(seeded.id, now, show)).toBeDefined();
+    expect(await getNote(seeded.id)).toMatchObject({
+      remindAt: now - MINUTE,
+      reminderShownAt: now,
+    });
+    expect(await markReminderShown(seeded.id, now, show)).toBeUndefined();
   });
 
   it('ignores a note that has been deleted', async () => {
-    const note = await seedNote();
-    await setNoteReminder(note.id, Date.now() - MINUTE);
-    await deleteNote(note.id);
+    const seeded = await seedNote();
+    await setNoteReminder(seeded.id, Date.now() - MINUTE);
+    await deleteNote(seeded.id);
 
-    expect(await takeDueReminder(note.id)).toBeUndefined();
+    expect(await markReminderShown(seeded.id, Date.now(), () => true)).toBeUndefined();
   });
 });
 
@@ -244,10 +286,27 @@ describe('keeping alarms in step', () => {
     alarms.set(reminderName(ahead.id), now + HOUR);
     alarms.set('something-else', now + HOUR);
 
-    expect(await syncReminderAlarms(api, now)).toEqual([due.id]);
+    expect(await syncReminderAlarms({ api, now, repeatMinutes: 5 })).toEqual([due.id]);
     expect(Object.fromEntries(alarms)).toEqual({
       [reminderName(ahead.id)]: now + DAY,
       'something-else': now + HOUR,
+    });
+  });
+
+  it('schedules the next repeat of one that went off, until the hour is up', async () => {
+    const tab = await createTab({ title: 'Life' });
+    const repeating = await createNote({ tabId: tab.id, title: 'Repeating' });
+    const finished = await createNote({ tabId: tab.id, title: 'Finished' });
+    const now = Date.now();
+    await setNoteReminder(repeating.id, now - 10 * MINUTE);
+    await getDatabase().notes.update(repeating.id, { reminderShownAt: now - 2 * MINUTE });
+    await setNoteReminder(finished.id, now - 2 * HOUR);
+    await getDatabase().notes.update(finished.id, { reminderShownAt: now - 61 * MINUTE });
+    const { api, alarms } = fakeApi();
+
+    expect(await syncReminderAlarms({ api, now, repeatMinutes: 5 })).toEqual([]);
+    expect(Object.fromEntries(alarms)).toEqual({
+      [reminderName(repeating.id)]: now + 3 * MINUTE,
     });
   });
 
@@ -255,7 +314,7 @@ describe('keeping alarms in step', () => {
     const note = await seedNote();
     await setNoteReminder(note.id, Date.now() - MINUTE);
 
-    expect(await syncReminderAlarms(null)).toEqual([note.id]);
+    expect(await syncReminderAlarms({ api: null, repeatMinutes: 5 })).toEqual([note.id]);
   });
 
   it('round-trips a note id through the alarm name', () => {
@@ -265,8 +324,35 @@ describe('keeping alarms in step', () => {
   });
 });
 
+describe('the toolbar badge', () => {
+  it('counts the reminders waiting to be seen', async () => {
+    const tab = await createTab({ title: 'Life' });
+    const now = Date.now();
+    for (const [title, at] of [
+      ['Missed', now - HOUR],
+      ['Just now', now],
+      ['Later', now + HOUR],
+    ] as const) {
+      const note = await createNote({ tabId: tab.id, title });
+      await setNoteReminder(note.id, at);
+    }
+    const { api, raw } = fakeApi();
+
+    await refreshReminderBadge(api, now);
+
+    expect(raw.action.setBadgeText).toHaveBeenCalledWith({ text: '2' });
+    expect(raw.action.setBadgeBackgroundColor).toHaveBeenCalled();
+  });
+
+  it('is empty when nothing is waiting', async () => {
+    const { api, raw } = fakeApi();
+    await refreshReminderBadge(api);
+    expect(raw.action.setBadgeText).toHaveBeenCalledWith({ text: '' });
+  });
+});
+
 describe('showing a reminder', () => {
-  it('shows the note title and text, then clears it', async () => {
+  it('shows the note title and text, and keeps the reminder until it is seen', async () => {
     const tab = await createTab({ title: 'Life' });
     const note = await createNote({
       tabId: tab.id,
@@ -276,17 +362,18 @@ describe('showing a reminder', () => {
         content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Ask about Friday' }] }],
       },
     });
-    await setNoteReminder(note.id, Date.now());
+    const now = Date.now();
+    await setNoteReminder(note.id, now);
     const { api, notificationsApi } = fakeApi();
 
-    expect(await showReminder(api, note.id)).toBe(true);
+    expect(await showReminder(api, note.id, now, 5)).toBe(true);
     expect(notificationsApi.create).toHaveBeenCalledWith(reminderName(note.id), {
       type: 'basic',
       iconUrl: 'ext://noutieren/icons/icon-128.png',
       title: 'Call the dentist',
       message: 'Ask about Friday',
     });
-    expect((await getNote(note.id))?.remindAt).toBeUndefined();
+    expect(await getNote(note.id)).toMatchObject({ remindAt: now, reminderShownAt: now });
   });
 
   it('says when it was due if it is shown late', async () => {
@@ -295,7 +382,7 @@ describe('showing a reminder', () => {
     await setNoteReminder(note.id, now - 3 * HOUR);
     const { api, notificationsApi } = fakeApi();
 
-    await showReminder(api, note.id, now);
+    await showReminder(api, note.id, now, 5);
 
     const [, options] = notificationsApi.create.mock.calls[0] as unknown as [
       string,
@@ -304,43 +391,56 @@ describe('showing a reminder', () => {
     expect(options.message).toMatch(/^Due /);
   });
 
-  it('holds it back, still due, without the notifications permission', async () => {
+  it('holds it back without the notifications permission', async () => {
     const note = await seedNote();
     const at = Date.now() - MINUTE;
     await setNoteReminder(note.id, at);
     const { api } = fakeApi({ notifications: false });
 
-    expect(await showReminder(api, note.id)).toBe(false);
+    expect(await showReminder(api, note.id, Date.now(), 5)).toBe(false);
+    expect((await getNote(note.id))?.reminderShownAt).toBeUndefined();
     expect((await getNote(note.id))?.remindAt).toBe(at);
   });
 
-  it('catches up on start: shows what came due and schedules the rest', async () => {
+  it('catches up on start: shows what came due, schedules the rest, counts it on the badge', async () => {
     const tab = await createTab({ title: 'Life' });
     const missed = await createNote({ tabId: tab.id, title: 'Missed' });
     const ahead = await createNote({ tabId: tab.id, title: 'Ahead' });
     const now = Date.now();
-    await setNoteReminder(missed.id, now - HOUR);
+    await setNoteReminder(missed.id, now - 10 * MINUTE);
     await setNoteReminder(ahead.id, now + HOUR);
-    const { api, alarms, notificationsApi } = fakeApi();
+    const { api, raw, alarms, notificationsApi } = fakeApi();
 
-    await catchUpOnReminders(api, now);
+    await catchUpOnReminders(api, now, 5);
 
     expect(notificationsApi.create).toHaveBeenCalledTimes(1);
     expect(notificationsApi.create.mock.calls[0][0]).toBe(reminderName(missed.id));
-    expect([...alarms.keys()]).toEqual([reminderName(ahead.id)]);
+    expect(Object.fromEntries(alarms)).toEqual({
+      [reminderName(missed.id)]: now + 5 * MINUTE,
+      [reminderName(ahead.id)]: now + HOUR,
+    });
+    expect(raw.action.setBadgeText).toHaveBeenLastCalledWith({ text: '1' });
   });
 
-  it('opens the note in the full page when the notification is clicked', async () => {
+  it('counts clicking the notification as seeing it, and opens the note', async () => {
+    const note = await seedNote();
+    await setNoteReminder(note.id, Date.now() - MINUTE);
     const { api, raw, notificationsApi } = fakeApi();
 
-    await openReminder(api, reminderName('abc-123'));
-    await openReminder(api, 'not-a-reminder');
+    await openReminder(api, reminderName(note.id));
 
-    expect(notificationsApi.clear).toHaveBeenCalledWith(reminderName('abc-123'));
-    expect(raw.tabs.create).toHaveBeenCalledTimes(1);
+    expect((await getNote(note.id))?.remindAt).toBeUndefined();
+    expect(notificationsApi.clear).toHaveBeenCalledWith(reminderName(note.id));
     expect(raw.tabs.create).toHaveBeenCalledWith({
-      url: 'ext://noutieren/index.html?view=page&note=abc-123',
+      url: `ext://noutieren/index.html?view=page&note=${note.id}`,
     });
+    expect(raw.action.setBadgeText).toHaveBeenLastCalledWith({ text: '' });
+  });
+
+  it('ignores clicks on anything that is not a reminder', async () => {
+    const { api, raw } = fakeApi();
+    await openReminder(api, 'not-a-reminder');
+    expect(raw.tabs.create).not.toHaveBeenCalled();
   });
 });
 
@@ -356,7 +456,21 @@ describe('background wiring', () => {
     await vi.waitFor(() => expect(notificationsApi.create).toHaveBeenCalledTimes(1));
   });
 
-  it('starts listening for clicks, and shows what was held back, once notifications are allowed', async () => {
+  it('counts a notification the user dismissed as seen, but not one that closed by itself', async () => {
+    const note = await seedNote();
+    await setNoteReminder(note.id, Date.now() - MINUTE);
+    const { api, on } = fakeApi();
+    installReminderHandlers(api);
+
+    on.closed.forEach((listener) => listener(reminderName(note.id), false));
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect((await getNote(note.id))?.remindAt).toBeDefined();
+
+    on.closed.forEach((listener) => listener(reminderName(note.id), true));
+    await vi.waitFor(async () => expect((await getNote(note.id))?.remindAt).toBeUndefined());
+  });
+
+  it('starts listening to notifications, and shows what was held back, once they are allowed', async () => {
     const note = await seedNote();
     await setNoteReminder(note.id, Date.now() - MINUTE);
     const { api, raw, on, notificationsApi } = fakeApi({ notifications: false });
@@ -368,6 +482,7 @@ describe('background wiring', () => {
     on.added.forEach((listener) => listener());
 
     expect(on.click).toHaveLength(1);
+    expect(on.closed).toHaveLength(1);
     await vi.waitFor(() => expect(notificationsApi.create).toHaveBeenCalledTimes(1));
   });
 });

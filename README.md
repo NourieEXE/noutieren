@@ -136,7 +136,12 @@ or any date and time. The note then shows a bell in the list and the time in its
 When it is due, the browser shows a notification with the note's title and the start of its
 text, even with Noutieren closed. Clicking it opens the note in a full-page tab, since a
 notification cannot open the sidebar. A reminder that came due while the browser was closed
-shows the next time it starts. Each one goes off once.
+shows the next time it starts.
+
+A reminder that has gone off stays until you have seen it: you open the note, click the
+notification, or dismiss it. Until then it goes off again every few minutes, for up to an hour,
+and the toolbar button shows how many are waiting. The interval is under **If you miss it** in
+the reminder dialog: every 2, 5 (the default), 10 or 15 minutes, or not at all.
 
 Notifications need the optional `notifications` permission, asked for the first time you set a
 reminder. Declining keeps the reminder, and it shows once notifications are allowed. As with
@@ -400,9 +405,10 @@ npm run webext:lint # web-ext lint against dist/
 npm run check       # typecheck + lint + tests + both builds + web-ext lint
 ```
 
-390 tests cover creating, renaming, recoloring, reordering and deleting tabs; creating,
+413 tests cover creating, renaming, recoloring, reordering and deleting tabs; creating,
 moving, duplicating, reordering, deleting and restoring notes; Recently deleted; reminders,
-their alarms and what the background does with them; autosave debouncing, flushing
+their alarms, repeats and badge, and what the background does with them; What's new and
+the update notice; autosave debouncing, flushing
 on note switch, and the guarantee that one note never receives another's content; storage
 failures keeping typed text; conflict detection between views; search within one tab and
 across all tabs; export format; valid, invalid and merging imports; import sanitizing; reset;
@@ -466,7 +472,7 @@ before publishing, is in [`chrome_version/README.md`](chrome_version/README.md).
   purpose; only the theme follows across views.
 - **`Ctrl+N` may be intercepted by Firefox** before the extension sees it, depending on
   platform and focus.
-- **Reminders do not repeat.** Each one goes off once and is then cleared.
+- **Reminders are one-off.** There are no daily or weekly ones.
 - **Firefox for Android is not supported**, since it has no extension sidebar.
 - **The bundle is a single ~750 KiB file** (~235 KiB gzipped): React, ProseMirror and Dexie.
   Code splitting would add nothing, since everything loads from local files.

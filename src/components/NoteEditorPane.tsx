@@ -14,6 +14,9 @@ import { Icon } from './Icons';
 import { SaveStatus } from './SaveStatus';
 import { ReminderDialog } from './ReminderDialog';
 import { useNotificationPermission } from '../hooks/useNotificationPermission';
+import { useDocumentVisible } from '../hooks/useDocumentVisible';
+import { useNow } from '../hooks/useNow';
+import { isReminderDue } from '../services/reminders';
 
 /**
  * Editor for the selected note: title, color, actions, and the rich-text
@@ -30,6 +33,8 @@ export function NoteEditorPane() {
   const [pinDialogOpen, setPinDialogOpen] = useState(false);
   const [reminderDialogOpen, setReminderDialogOpen] = useState(false);
   const notificationsAllowed = useNotificationPermission();
+  const visible = useDocumentVisible();
+  const now = useNow(30 * 1000);
 
   const noteId = selectedNote?.id ?? null;
   const { status, content, reload } = useNoteContent(noteId);
@@ -48,6 +53,19 @@ export function NoteEditorPane() {
     if (paneRef.current?.contains(document.activeElement)) return;
     reload();
   }, [selectedNote, reload]);
+
+  /*
+   * Seeing the note counts as seeing its reminder, once it has gone off. With
+   * notifications off it never goes off, so being due is enough. Checked only
+   * while this page is on screen, not as a background tab.
+   */
+  useEffect(() => {
+    if (!selectedNote || !visible) return;
+    const wentOff =
+      selectedNote.reminderShownAt !== undefined ||
+      (!notificationsAllowed && isReminderDue(selectedNote, now));
+    if (wentOff) void actions.acknowledgeReminder(selectedNote.id);
+  }, [selectedNote, visible, notificationsAllowed, now, actions]);
 
   if (!selectedNote) {
     return (

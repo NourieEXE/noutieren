@@ -44,7 +44,11 @@ import {
 } from '../services/pinVisibility';
 import { useActiveUrl } from '../hooks/useActiveUrl';
 import { detectViewMode, openFullPageEditor, requestedNoteId } from '../services/webext';
-import { syncReminderAlarms } from '../services/reminders';
+import {
+  acknowledgeReminder,
+  refreshReminderBadge,
+  syncReminderAlarms,
+} from '../services/reminders';
 import { formatReminderTime } from '../utils/time';
 
 /**
@@ -383,7 +387,10 @@ export function WorkspaceProvider({
 
   const actions = useMemo<WorkspaceActions>(() => {
     const resyncAlarms = () => {
-      syncReminderAlarms().catch((error: unknown) => logError('syncReminderAlarms', error));
+      void (async () => {
+        await syncReminderAlarms();
+        await refreshReminderBadge();
+      })().catch((error: unknown) => logError('syncReminderAlarms', error));
     };
 
     const guard = async (context: string, run: () => Promise<void>): Promise<void> => {
@@ -555,6 +562,7 @@ export function WorkspaceProvider({
         guard('setReminder', async () => {
           await setNoteReminder(id, at);
           await syncReminderAlarms();
+          await refreshReminderBadge();
           toasts.push({
             message:
               at === null ? 'Reminder removed.' : `Reminder set for ${formatReminderTime(at)}.`,
@@ -571,7 +579,10 @@ export function WorkspaceProvider({
         guard('refreshAfterBulkChange', async () => {
           setReloadKey((key) => key + 1);
           await syncReminderAlarms();
+          await refreshReminderBadge();
         }),
+
+      acknowledgeReminder: (id) => guard('acknowledgeReminder', () => acknowledgeReminder(id)),
     };
   }, [
     effectiveTabId,

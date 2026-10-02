@@ -9,6 +9,8 @@ import { formatAbsoluteTime, formatRelativeTime, formatReminderTime } from '../u
 import { withAlpha } from '../utils/colors';
 import type { NoteMeta, SearchResult } from '../types';
 import { Icon } from './Icons';
+import { useNow } from '../hooks/useNow';
+import { isReminderDue } from '../services/reminders';
 
 /** Row height must match `--note-row-height` in the stylesheet. */
 const ROW_HEIGHT = 74;
@@ -43,6 +45,7 @@ export function NotesPanel({
   } = useWorkspace();
 
   const [query, setQuery] = useState('');
+  const now = useNow(30 * 1000);
   const debouncedQuery = useDebouncedValue(query, SEARCH_DEBOUNCE_MS);
   const scope = preferences.searchAllTabs ? 'all' : 'tab';
   const searching = debouncedQuery.trim().length > 0;
@@ -129,6 +132,7 @@ export function NotesPanel({
                       snippet={result.snippet}
                       tabLabel={scope === 'all' ? result.tab?.title : undefined}
                       tabColor={result.tab?.color}
+                      now={now}
                       onSelect={() => revealNote(result.note.tabId, result.note.id)}
                     />
                   ))
@@ -140,6 +144,7 @@ export function NotesPanel({
                       note={note}
                       selected={note.id === selectedNoteId}
                       snippet={previewText(note.plainText)}
+                      now={now}
                       onSelect={() => selectNote(note.id)}
                     />
                   ))}
@@ -167,15 +172,19 @@ function NoteRow({
   snippet,
   tabLabel,
   tabColor,
+  now,
   onSelect,
 }: {
   note: NoteMeta;
   selected: boolean;
+  /** For telling a due reminder apart. */
+  now: number;
   snippet: string;
   tabLabel?: string | undefined;
   tabColor?: string | undefined;
   onSelect: () => void;
 }) {
+  const due = isReminderDue(note, now);
   return (
     <div role="listitem" className="note-row__wrapper">
       <button
@@ -206,11 +215,11 @@ function NoteRow({
           <span className="note-row__when">
             {note.remindAt !== undefined ? (
               <span
-                className="note-row__reminder"
+                className={`note-row__reminder${due ? ' note-row__reminder--due' : ''}`}
                 title={`Reminder: ${formatReminderTime(note.remindAt)}`}
               >
                 <Icon name="bell" size={12} />
-                <span className="visually-hidden">Reminder set. </span>
+                <span className="visually-hidden">{due ? 'Reminder due. ' : 'Reminder set. '}</span>
               </span>
             ) : null}
             <time

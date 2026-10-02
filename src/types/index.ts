@@ -42,8 +42,10 @@ export interface NoteMeta {
   updatedAt: number;
   /** When set and non-empty, this note is only shown on matching pages. */
   urlPatterns?: UrlPatterns;
-  /** When a reminder is due. Absent when there is none, and cleared once shown. */
+  /** When a reminder is due. Kept after it goes off, until the user has seen it. */
   remindAt?: number;
+  /** When the reminder last went off. Cleared with `remindAt`. */
+  reminderShownAt?: number;
 }
 
 /** The rich-text document for a note, stored separately from its metadata. */
@@ -80,6 +82,8 @@ export interface AppPreferences {
   lastExportedAt: number | null;
   /** Reveals everything "Pin to URL" would otherwise hide. */
   showHiddenPins: boolean;
+  /** How often a reminder goes off again until it is seen. 0 means once. */
+  reminderRepeatMinutes: number;
 }
 
 export type SaveState = 'idle' | 'saving' | 'saved' | 'error';
