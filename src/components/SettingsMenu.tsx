@@ -118,6 +118,15 @@ export function SettingsMenu() {
               <Icon name="externalLink" />
               Open full-page editor
             </MenuItem>
+            <MenuItem
+              onSelect={() => {
+                close();
+                void openFullPageEditor({ show: 'whats-new' });
+              }}
+            >
+              <Icon name="listBullet" />
+              What's new
+            </MenuItem>
 
             <MenuSeparator label="Theme" />
             {THEME_OPTIONS.map((option) => (

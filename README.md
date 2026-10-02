@@ -53,6 +53,8 @@ Built with React, TypeScript, Vite, Tiptap/ProseMirror and Dexie. MIT licensed.
 - Export everything to a JSON file, import it back by replacing or merging, or reset.
 - Light, dark and system themes, keyboard navigation, and a layout that works from a 320 px
   sidebar to a full window.
+- After an update, a one-line notice links to **What's new**, a page with plain notes for every
+  version. It is also in the settings menu. A fresh install shows nothing.
 
 | Tab settings                                                                                                                                                                                                                                            | Note actions                                                                                                                                                             |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -289,7 +291,10 @@ may open a browser window instead of a note. The **New note** button always work
 - **Reminders** are a `remindAt` time on the note row, indexed so the due ones are one query.
   Alarms are rebuilt from it at startup, since Firefox does not keep them across a restart.
 - **`browser.storage.local`** holds only small UI preferences: selected tab and note,
-  collapsed panel, theme, search scope, and whether the "show hidden" pin override is on.
+  collapsed panel, theme, search scope, and whether the "show hidden" pin override is on. After
+  an update it also holds the previous version number, until the notice is dismissed.
+- **What's new** reads `src/releaseNotes.ts`, which is written for users; this file and
+  `CHANGELOG.md` are for developers. A test fails if a version is in one and not the other.
 - `unlimitedStorage` is requested so notes are not capped by the default extension quota.
 - The schema is versioned (`SCHEMA_VERSION` in `src/database/db.ts`) with Dexie migrations, so
   future changes upgrade existing data instead of discarding it. To add one, append a new

@@ -10,6 +10,7 @@ import { NotesPanel } from '../components/NotesPanel';
 import { NoteEditorPane } from '../components/NoteEditorPane';
 import { SettingsMenu } from '../components/SettingsMenu';
 import { PermissionBanner } from '../components/PermissionBanner';
+import { UpdateNotice } from '../components/UpdateNotice';
 import { HelpDialog } from '../components/HelpDialog';
 import { Icon } from '../components/Icons';
 
@@ -91,6 +92,7 @@ export function App() {
         <SettingsMenu />
       </header>
 
+      <UpdateNotice />
       <PermissionBanner pinsGranted={pinStatus.granted} />
 
       <TabStrip notesPanelId={collapsed ? undefined : notesPanelId} />

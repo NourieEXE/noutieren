@@ -15,7 +15,8 @@ Everything you type stays in your own Firefox profile on your own device:
 - **Reminder times** you set, on the note they belong to.
 - **A few interface preferences** (which tab and note you had open, whether the notes list is
   collapsed, your theme, your search scope, and the date of your last backup) are stored in
-  `browser.storage.local`.
+  `browser.storage.local`. After an update, so is the version you updated from, until you
+  dismiss the notice about it.
 
 Neither is readable by websites you visit, by other extensions, or by the author.
 

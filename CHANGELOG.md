@@ -5,6 +5,14 @@ All notable changes to Noutieren. Dates are the build date; versions follow
 
 ## Unreleased
 
+### Added
+
+- **What's new.** _Settings → What's new_ opens a page with plain notes for every version,
+  newest first, from `src/releaseNotes.ts`. After an update, a one-line notice at the top of the
+  sidebar or popup links to it until dismissed; a fresh install shows nothing. The background
+  records the version updated from on `runtime.onInstalled`. A test fails if `CHANGELOG.md` and
+  the release notes disagree, or if the version being built has no notes.
+
 ## 1.4.0 - 2026-09-26
 
 ### Added

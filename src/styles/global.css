@@ -1661,3 +1661,108 @@ kbd {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* The one-time line after an update. */
+.update-notice {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px var(--space-2);
+  padding: 4px var(--space-2) 4px var(--space-3);
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-surface);
+  color: var(--fg-muted);
+  font-size: 13px;
+}
+
+.update-notice__close {
+  margin-left: auto;
+}
+
+.link-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* ------------------------------------------------------------- what's new */
+
+/* The document never scrolls (see `body`), so this page scrolls itself. */
+.whats-new {
+  height: 100%;
+  overflow-y: auto;
+  background: var(--bg-surface);
+}
+
+.whats-new__column {
+  max-width: 38rem;
+  margin: 0 auto;
+  padding: 32px 20px 64px;
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.whats-new__back {
+  color: var(--fg-muted);
+  font-size: 13px;
+}
+
+.whats-new__title {
+  margin: 20px 0 2px;
+  font-size: 24px;
+  line-height: 1.25;
+}
+
+.whats-new__lead {
+  margin: 0 0 8px;
+  color: var(--fg-muted);
+}
+
+.release {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.release__heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  margin: 0 0 6px;
+  font-size: 17px;
+  font-variant-numeric: tabular-nums;
+}
+
+.release__date {
+  color: var(--fg-subtle);
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.release__notes {
+  margin: 0;
+  padding-left: 1.2em;
+}
+
+.release__notes li + li {
+  margin-top: 6px;
+}
+
+.whats-new__footer {
+  margin: 40px 0 0;
+  color: var(--fg-subtle);
+  font-size: 13px;
+}
+
+.whats-new a {
+  color: var(--accent);
+}
+
+.whats-new a.whats-new__back {
+  color: var(--fg-muted);
+}

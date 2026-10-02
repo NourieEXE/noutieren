@@ -4,7 +4,8 @@ import '../styles/global.css';
 import { ErrorBoundary } from './ErrorBoundary';
 import { ToastProvider } from '../components/ToastProvider';
 import { AppBootstrap } from './AppBootstrap';
-import { detectViewMode } from '../services/webext';
+import { detectViewMode, requestedShow } from '../services/webext';
+import { WhatsNewPage } from '../components/WhatsNewPage';
 
 /**
  * Renders the application into `#root`.
@@ -25,9 +26,13 @@ export function mount(): void {
   createRoot(container).render(
     <StrictMode>
       <ErrorBoundary>
-        <ToastProvider>
-          <AppBootstrap />
-        </ToastProvider>
+        {requestedShow() === 'whats-new' ? (
+          <WhatsNewPage />
+        ) : (
+          <ToastProvider>
+            <AppBootstrap />
+          </ToastProvider>
+        )}
       </ErrorBoundary>
     </StrictMode>,
   );

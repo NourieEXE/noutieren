@@ -53,6 +53,10 @@ const GRANT_REASONS: readonly string[] = ['pins', 'reminders'];
 /** Set when a reminder notification opens the full page on its note. */
 const NOTE_PARAM = 'note';
 
+/** A page other than the notes, opened in the full-page view. */
+export type FullPageShow = 'whats-new';
+const SHOW_PARAM = 'show';
+
 export function requestedGrant(search: string = window.location.search): GrantReason | null {
   const value = new URLSearchParams(search).get(GRANT_PARAM);
   return value !== null && GRANT_REASONS.includes(value) ? (value as GrantReason) : null;
@@ -63,6 +67,10 @@ export function wantsPinPermissionGrant(search: string = window.location.search)
   return requestedGrant(search) === 'pins';
 }
 
+export function requestedShow(search: string = window.location.search): FullPageShow | null {
+  return new URLSearchParams(search).get(SHOW_PARAM) === 'whats-new' ? 'whats-new' : null;
+}
+
 export function requestedNoteId(search: string = window.location.search): string | null {
   const value = new URLSearchParams(search).get(NOTE_PARAM);
   return isValidId(value) ? value : null;
@@ -71,11 +79,13 @@ export function requestedNoteId(search: string = window.location.search): string
 export interface FullPageOptions {
   grant?: GrantReason;
   noteId?: string;
+  show?: FullPageShow;
 }
 
 /** The full-page path, relative to the extension root. */
-export function fullPagePath({ grant, noteId }: FullPageOptions = {}): string {
+export function fullPagePath({ grant, noteId, show }: FullPageOptions = {}): string {
   let path = FULL_PAGE_URL;
+  if (show) path += `&${SHOW_PARAM}=${show}`;
   if (grant) path += `&${GRANT_PARAM}=${grant}`;
   if (noteId) path += `&${NOTE_PARAM}=${encodeURIComponent(noteId)}`;
   return path;

@@ -3,6 +3,7 @@ import { applyNotePatch } from '../../src/database/notesRepository';
 import { logError } from '../../src/services/errors';
 import type { PendingWrite } from '../../src/services/teardown';
 import { installReminderHandlers } from '../../src/background/reminders';
+import { installUpdateNotice } from '../../src/services/whatsNew';
 import { parseFlushPending, type FlushPendingResult } from './messages';
 
 /**
@@ -14,7 +15,8 @@ import { parseFlushPending, type FlushPendingResult } from './messages';
  * worker, a separate context with its own connection to the same database,
  * performs the write.
  *
- * It also fires reminders, the same code as Firefox's event page.
+ * It also fires reminders and notes updates, the same code as Firefox's event
+ * page.
  *
  * There is no toolbar-click listener, unlike the Firefox build: `default_popup`
  * in the manifest means Chrome opens the popup itself.
@@ -96,4 +98,5 @@ if (typeof chrome !== 'undefined' && chrome) {
     handleMessage as WebExtension.Runtime.OnMessageListenerCallback,
   );
   installReminderHandlers(chrome);
+  installUpdateNotice(chrome);
 }
