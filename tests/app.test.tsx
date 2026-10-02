@@ -119,11 +119,14 @@ describe('creating notes and tabs', () => {
     await waitFor(() => {
       expect(within(notesList()).getAllByRole('listitem')).toHaveLength(2);
     });
-    // The newly created note is the selected one.
-    const selected = within(notesList())
-      .getAllByRole('button')
-      .filter((button) => button.getAttribute('aria-current') === 'true');
-    expect(selected).toHaveLength(1);
+    // The newly created note is the selected one. Selection can land a render
+    // after the list grows, so this waits too.
+    await waitFor(() => {
+      const selected = within(notesList())
+        .getAllByRole('button')
+        .filter((button) => button.getAttribute('aria-current') === 'true');
+      expect(selected).toHaveLength(1);
+    });
   });
 
   it('creates a note with Ctrl+N', async () => {
