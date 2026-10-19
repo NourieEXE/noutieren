@@ -5,6 +5,8 @@ All notable changes to Noutieren. Dates are the build date; versions follow
 
 ## Unreleased
 
+## 1.5.0 - 2026-10-19
+
 ### Added
 
 - **What's new.** _Settings → What's new_ opens a page with plain notes for every version,

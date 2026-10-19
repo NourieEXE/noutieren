@@ -1,6 +1,6 @@
 # Privacy policy for Noutieren
 
-**Last updated: 26 September 2026**
+**Last updated: 19 October 2026**
 
 Noutieren does not collect, transmit, sell or share any data. There is no server to send
 anything to.

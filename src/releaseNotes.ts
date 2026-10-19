@@ -13,6 +13,19 @@ export interface Release {
 /** Newest first. */
 export const RELEASES: readonly Release[] = [
   {
+    version: '1.5.0',
+    date: '2026-10-19',
+    notes: [
+      'A reminder you miss keeps going off every few minutes until you open its note, for up to an hour. You can choose how often, or turn it off, under If you miss it when you set a reminder.',
+      'The toolbar button shows how many reminders are waiting, and their notes get a red bell in the list.',
+      'This page. After an update, a line at the top of Noutieren links here, and it is in the settings menu too.',
+      'Reminder notifications show only the note’s title now, not its text, since notifications can appear on the lock screen.',
+      'Security fixes in the libraries behind the editor, including one in how pasted text is handled.',
+      'Fixed a pin with lots of * wildcards being able to freeze Noutieren.',
+      'Fixed the tab strip stretching when a notice was shown above it.',
+    ],
+  },
+  {
     version: '1.4.0',
     date: '2026-09-26',
     notes: [

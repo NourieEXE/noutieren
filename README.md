@@ -234,7 +234,7 @@ files, source maps, remote references and dynamic code.
 npm run package
 ```
 
-Creates **`web-ext-artifacts/noutieren-1.4.0.zip`** (about 280 KB). Source maps are
+Creates **`web-ext-artifacts/noutieren-1.5.0.zip`** (about 290 KB). Source maps are
 excluded and no development files are included.
 
 ## Installing permanently (signing)
@@ -406,7 +406,7 @@ npm run webext:lint # web-ext lint against dist/
 npm run check       # typecheck + lint + tests + both builds + web-ext lint
 ```
 
-413 tests cover creating, renaming, recoloring, reordering and deleting tabs; creating,
+423 tests cover creating, renaming, recoloring, reordering and deleting tabs; creating,
 moving, duplicating, reordering, deleting and restoring notes; Recently deleted; reminders,
 their alarms, repeats and badge, and what the background does with them; What's new and
 the update notice; autosave debouncing, flushing
