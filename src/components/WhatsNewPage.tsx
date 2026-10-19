@@ -57,7 +57,14 @@ export function WhatsNewPage() {
 
         <p className="whats-new__footer">
           The developer changelog is in the{' '}
-          <a href="https://github.com/NourieEXE/noutieren/blob/main/CHANGELOG.md">repository</a>.
+          <a
+            href="https://github.com/NourieEXE/noutieren/blob/main/CHANGELOG.md"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            repository
+          </a>
+          .
         </p>
       </main>
     </div>

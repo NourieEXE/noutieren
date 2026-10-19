@@ -252,7 +252,7 @@ export function parseBackup(text: string): ParsedBackup {
       } catch (error) {
         if (error instanceof DocumentTooLargeError) {
           throw new ImportValidationError(
-            `Note "${normalizeText(record.title, 'Untitled')}" is implausibly large and was not imported.`,
+            `Note "${normalizeText(record.title, 'Untitled')}" is implausibly large or deeply nested and was not imported.`,
             { cause: error },
           );
         }

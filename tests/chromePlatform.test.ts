@@ -10,7 +10,7 @@ import {
 import { createTab } from '../src/database/tabsRepository';
 import { createNote, getNote, getNoteContent } from '../src/database/notesRepository';
 import { FLUSH_PENDING, parseFlushPending } from '../chrome_version/src/messages';
-import { applyHandedOffWrites } from '../chrome_version/src/serviceWorker';
+import { applyHandedOffWrites, isFromOwnPage } from '../chrome_version/src/serviceWorker';
 import type { Note } from '../src/types';
 
 /**
@@ -271,6 +271,21 @@ describe('flush message', () => {
     });
 
     expect(parsed).toEqual([]);
+  });
+});
+
+describe('who may hand over writes', () => {
+  const id = 'abcdefghijklmnop';
+  const root = `chrome-extension://${id}/`;
+
+  it("accepts this extension's own pages", () => {
+    expect(isFromOwnPage({ id, url: `${root}popup.html` }, id, root)).toBe(true);
+  });
+
+  it('refuses another extension, a content script, or a sender with no page', () => {
+    expect(isFromOwnPage({ id: 'someoneelse', url: `${root}popup.html` }, id, root)).toBe(false);
+    expect(isFromOwnPage({ id, url: 'https://example.com/' }, id, root)).toBe(false);
+    expect(isFromOwnPage({ id }, id, root)).toBe(false);
   });
 });
 

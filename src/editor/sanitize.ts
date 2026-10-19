@@ -41,9 +41,12 @@ const ALLOWED_MARKS: Record<string, readonly string[]> = {
 /** Guards against pathological files; far above any realistic note. */
 export const MAX_DOCUMENT_NODES = 100_000;
 
+/** Real notes nest a few levels. Deeper than this overflows the stack, here or in the editor. */
+export const MAX_DOCUMENT_DEPTH = 100;
+
 export class DocumentTooLargeError extends Error {
-  constructor() {
-    super(`Document exceeds the maximum of ${MAX_DOCUMENT_NODES} nodes.`);
+  constructor(reason = `more than ${MAX_DOCUMENT_NODES} nodes`) {
+    super(`Document has ${reason}.`);
     this.name = 'DocumentTooLargeError';
   }
 }
@@ -115,12 +118,12 @@ function sanitizeAttrs(type: string, attrs: unknown): Record<string, unknown> | 
  * Returns an allowlisted copy of `input`.
  *
  * @throws {DocumentTooLargeError} when the document has an implausible number
- * of nodes, which is rejected rather than silently truncated.
+ * of nodes or levels, which is rejected rather than silently truncated.
  */
 export function sanitizeDocument(input: unknown): JSONContent {
   let nodeCount = 0;
 
-  const sanitizeNode = (node: unknown): JSONContent | null => {
+  const sanitizeNode = (node: unknown, depth: number): JSONContent | null => {
     if (!node || typeof node !== 'object') return null;
     const source = node as JSONContent;
     const type = typeof source.type === 'string' ? source.type : null;
@@ -128,6 +131,9 @@ export function sanitizeDocument(input: unknown): JSONContent {
 
     nodeCount += 1;
     if (nodeCount > MAX_DOCUMENT_NODES) throw new DocumentTooLargeError();
+    if (depth > MAX_DOCUMENT_DEPTH) {
+      throw new DocumentTooLargeError(`more than ${MAX_DOCUMENT_DEPTH} levels of nesting`);
+    }
 
     const result: JSONContent = { type };
 
@@ -145,7 +151,7 @@ export function sanitizeDocument(input: unknown): JSONContent {
     if (Array.isArray(source.content)) {
       const children: JSONContent[] = [];
       for (const child of source.content) {
-        const sanitized = sanitizeNode(child);
+        const sanitized = sanitizeNode(child, depth + 1);
         if (sanitized) children.push(sanitized);
       }
       if (children.length > 0) result.content = children;
@@ -154,7 +160,7 @@ export function sanitizeDocument(input: unknown): JSONContent {
     return result;
   };
 
-  const sanitized = sanitizeNode(input);
+  const sanitized = sanitizeNode(input, 0);
   if (!sanitized || sanitized.type !== 'doc' || !sanitized.content?.length) {
     // Anything unrecognisable becomes an empty document instead of an error:
     // losing formatting is recoverable, losing the whole import is not.

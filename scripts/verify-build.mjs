@@ -110,6 +110,10 @@ if (manifest) {
 
   const csp = manifest.content_security_policy?.extension_pages ?? '';
   if (!/script-src 'self'/.test(csp)) fail("extension_pages CSP must contain script-src 'self'.");
+  // Anything not listed is refused, so a new kind of resource has to be allowed on purpose.
+  if (!/default-src 'none'/.test(csp))
+    fail("extension_pages CSP must start from default-src 'none'.");
+  if (!/object-src 'none'/.test(csp)) fail("extension_pages CSP must set object-src 'none'.");
   if (/unsafe-eval|unsafe-inline/.test(csp))
     fail('extension_pages CSP must not allow unsafe-eval or unsafe-inline.');
 

@@ -38,6 +38,17 @@ All notable changes to Noutieren. Dates are the build date; versions follow
   matcher replaces it; patterns match exactly as before.
 - **Reminder notifications no longer include the note's text**, only its title. Notifications
   show on lock screens, stay in the system's notification history, and appear in screen shares.
+- **Hardening**, none of it exploitable before as far as could be found:
+  - The extension pages' CSP starts from `default-src 'none'` and sets `object-src 'none'`, so a
+    kind of resource nobody allowed is refused. `verify-build.mjs` requires both.
+  - Chrome's service worker only accepts handed-off writes from this extension's own pages. The
+    browser already guarantees that for `onMessage`; the worker now checks too.
+  - Imported documents nested more than 100 levels deep are rejected with a message, instead of
+    overflowing the stack (5,000 levels did) or reaching the editor.
+  - The repository link on the What's new page opens in a new tab without a referrer, so it does
+    not tell GitHub the visitor has Noutieren installed.
+  - A test pins down that the live editor drops `javascript:`, `data:` and `vbscript:` links
+    from pasted HTML and refuses them in the link command.
 
 ### Fixed
 

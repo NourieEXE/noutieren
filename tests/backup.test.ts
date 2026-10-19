@@ -171,6 +171,26 @@ describe('import validation', () => {
     );
   });
 
+  it('rejects a document nested deeper than any real note, instead of overflowing the stack', () => {
+    const nested = (depth: number) => {
+      let node: Record<string, unknown> = {
+        type: 'paragraph',
+        content: [{ type: 'text', text: 'deep' }],
+      };
+      for (let i = 0; i < depth; i += 1) node = { type: 'blockquote', content: [node] };
+      return validBackup({
+        notes: [
+          { id: 'n', tabId: 'tab-1', title: 'Deep', content: { type: 'doc', content: [node] } },
+        ],
+      });
+    };
+
+    expect(() => parseBackup(JSON.stringify(nested(50)))).not.toThrow();
+    for (const depth of [150, 20_000]) {
+      expect(() => parseBackup(JSON.stringify(nested(depth)))).toThrow(/deeply nested/i);
+    }
+  });
+
   it('rejects an implausibly large document', () => {
     const huge = {
       type: 'doc',

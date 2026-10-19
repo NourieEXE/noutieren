@@ -71,23 +71,39 @@ type MessageHandler = (
   sendResponse: (response: unknown) => void,
 ) => true | undefined;
 
-const handleMessage: MessageHandler = (message, _sender, sendResponse) => {
-  const writes = parseFlushPending(message);
-  // Not ours: claim nothing, so any other listener stays free to answer.
-  if (writes === null) return undefined;
+/**
+ * Whether a message comes from one of this extension's own pages. The browser
+ * only delivers `onMessage` from this extension anyway, but these writes go
+ * straight into the notes, so the worker checks for itself.
+ */
+export function isFromOwnPage(
+  sender: { id?: string; url?: string },
+  extensionId: string,
+  extensionRoot: string,
+): boolean {
+  return sender.id === extensionId && sender.url?.startsWith(extensionRoot) === true;
+}
 
-  void applyHandedOffWrites(writes).then((result) => {
-    try {
-      sendResponse(result);
-    } catch {
-      // The popup that asked has almost certainly gone; the write is what
-      // mattered, and it has already happened.
-    }
-  });
+function createMessageHandler(api: WebExtension.Browser): MessageHandler {
+  return (message, sender, sendResponse) => {
+    if (!isFromOwnPage(sender, api.runtime.id, api.runtime.getURL(''))) return undefined;
+    const writes = parseFlushPending(message);
+    // Not ours: claim nothing, so any other listener stays free to answer.
+    if (writes === null) return undefined;
 
-  // Keeps the worker alive until `sendResponse` runs.
-  return true;
-};
+    void applyHandedOffWrites(writes).then((result) => {
+      try {
+        sendResponse(result);
+      } catch {
+        // The popup that asked has almost certainly gone; the write is what
+        // mattered, and it has already happened.
+      }
+    });
+
+    // Keeps the worker alive until `sendResponse` runs.
+    return true;
+  };
+}
 
 // `typeof` rather than a truthiness check: outside an extension the identifier
 // is undeclared, not merely undefined, so reading it directly throws. Unit tests
@@ -95,7 +111,7 @@ const handleMessage: MessageHandler = (message, _sender, sendResponse) => {
 // registration on the way in.
 if (typeof chrome !== 'undefined' && chrome) {
   chrome.runtime.onMessage.addListener(
-    handleMessage as WebExtension.Runtime.OnMessageListenerCallback,
+    createMessageHandler(chrome) as WebExtension.Runtime.OnMessageListenerCallback,
   );
   installReminderHandlers(chrome);
   installUpdateNotice(chrome);
