@@ -35,12 +35,12 @@
     "icon:store": "node scripts/generate-store-icon.mjs"
   },
   "dependencies": {
-    "@tiptap/core": "^3.29.0",
-    "@tiptap/extension-list": "^3.29.0",
-    "@tiptap/extensions": "^3.29.0",
-    "@tiptap/pm": "^3.29.0",
-    "@tiptap/react": "^3.29.0",
-    "@tiptap/starter-kit": "^3.29.0",
+    "@tiptap/core": "^3.32.0",
+    "@tiptap/extension-list": "^3.32.0",
+    "@tiptap/extensions": "^3.32.0",
+    "@tiptap/pm": "^3.32.0",
+    "@tiptap/react": "^3.32.0",
+    "@tiptap/starter-kit": "^3.32.0",
     "dexie": "^4.4.4",
     "dexie-react-hooks": "^4.4.0",
     "react": "^19.2.8",
