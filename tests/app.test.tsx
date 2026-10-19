@@ -114,7 +114,11 @@ describe('creating notes and tabs', () => {
   it('creates a note with the New note button and selects it', async () => {
     const { user } = await renderApp();
 
-    await user.click(screen.getByRole('button', { name: /^New note$/ }));
+    // The one in the notes list. Until a note is selected the editor shows its
+    // own "New note" button too, so an unscoped query can find two.
+    await user.click(
+      within(screen.getByRole('tabpanel')).getByRole('button', { name: /^New note$/ }),
+    );
 
     await waitFor(() => {
       expect(within(notesList()).getAllByRole('listitem')).toHaveLength(2);

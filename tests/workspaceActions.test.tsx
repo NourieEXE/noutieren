@@ -137,7 +137,7 @@ describe('note actions', () => {
 
     await waitFor(() => expect(rowTitles()).toEqual(['Old idea', 'Other']));
     await waitFor(() => expect(within(dialog).getByText('Nothing here.')).toBeInTheDocument());
-    expect(screen.getByText(/Restored "Old idea" to "Work"/)).toBeInTheDocument();
+    expect(await screen.findByText(/Restored "Old idea" to "Work"/)).toBeInTheDocument();
   });
 
   it('moves a note to another tab', async () => {

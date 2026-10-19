@@ -102,7 +102,10 @@ describe('setting a reminder', () => {
     await user.click(within(dialog).getByRole('button', { name: /Tomorrow morning/ }));
 
     await waitFor(async () => expect((await getNote(note.id))?.remindAt).toBe(tomorrow));
-    expect(api.alarms.create).toHaveBeenCalledWith(reminderName(note.id), { when: tomorrow });
+    // Scheduled after the write, so it is waited for as well.
+    await waitFor(() =>
+      expect(api.alarms.create).toHaveBeenCalledWith(reminderName(note.id), { when: tomorrow }),
+    );
     expect(await screen.findByRole('button', { name: /^Tomorrow, / })).toBeInTheDocument();
     expect(screen.getByText('Reminder set.')).toBeInTheDocument();
     // Already allowed, so nothing is asked.
@@ -123,7 +126,7 @@ describe('setting a reminder', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Remove reminder' }));
 
     await waitFor(async () => expect((await getNote(note.id))?.remindAt).toBeUndefined());
-    expect(api.alarms.clear).toHaveBeenCalledWith(reminderName(note.id));
+    await waitFor(() => expect(api.alarms.clear).toHaveBeenCalledWith(reminderName(note.id)));
     expect(await screen.findByText('Reminder removed.')).toBeInTheDocument();
   });
 
@@ -224,8 +227,9 @@ describe('seeing a reminder', () => {
     await renderApp(tab.id);
 
     await waitFor(async () => expect((await getNote(note.id))?.remindAt).toBeUndefined());
+    // The badge is the last step, so once it is cleared the rest has run.
+    await waitFor(() => expect(api.action.setBadgeText).toHaveBeenLastCalledWith({ text: '' }));
     expect(api.notifications.clear).toHaveBeenCalledWith(reminderName(note.id));
-    expect(api.action.setBadgeText).toHaveBeenLastCalledWith({ text: '' });
   });
 
   it('does not happen in a tab that is not on screen', async () => {
@@ -284,6 +288,6 @@ describe('the repeat setting', () => {
         preferences: expect.objectContaining({ reminderRepeatMinutes: 10 }) as unknown,
       }),
     );
-    expect(api.alarms.getAll).toHaveBeenCalled();
+    await waitFor(() => expect(api.alarms.getAll).toHaveBeenCalled());
   });
 });
