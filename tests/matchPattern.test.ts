@@ -306,3 +306,17 @@ describe('describing patterns', () => {
     expect(describePattern('nonsense://')).toBe('Invalid pattern');
   });
 });
+
+describe('hostile patterns', () => {
+  // As a regular expression this took minutes: each `*` was `.*`, and a URL
+  // that almost matches makes them backtrack against each other.
+  it('match in linear-ish time, even with every wildcard allowed', () => {
+    const hostile = 'https://example.com/' + '*a'.repeat(9) + '*b';
+    const url = 'https://example.com/' + 'a'.repeat(2000);
+
+    const started = performance.now();
+    expect(matchesAnyPattern([hostile], url)).toBe(false);
+    expect(matchesAnyPattern([hostile], `${url}b`)).toBe(true);
+    expect(performance.now() - started).toBeLessThan(250);
+  });
+});

@@ -26,8 +26,8 @@ export interface MatchPattern {
   readonly host: string | null;
   /** True for `*.example.com`, which also matches `example.com`. */
   readonly matchSubdomains: boolean;
-  /** Tested against pathname + search. */
-  readonly path: RegExp;
+  /** Matched against pathname + search; `*` is the only wildcard. */
+  readonly path: string;
 }
 
 export const ALL_URLS = '<all_urls>';
@@ -36,7 +36,7 @@ export const MAX_PATTERNS_PER_PIN = 20;
 
 const MAX_PATTERN_LENGTH = 2048;
 
-/** Each `*` becomes `.*`, and a long chain backtracks badly. */
+/** More than this is almost certainly a mistake. */
 const MAX_PATH_WILDCARDS = 10;
 
 const HOST_PATTERN = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/;
@@ -66,7 +66,7 @@ export function parsePattern(input: unknown): PatternParseResult {
         scheme: null,
         host: null,
         matchSubdomains: true,
-        path: /^.*$/,
+        path: '*',
       },
     };
   }
@@ -111,7 +111,7 @@ export function parsePattern(input: unknown): PatternParseResult {
       scheme,
       host: host.host,
       matchSubdomains: host.matchSubdomains,
-      path: compilePath(rawPath),
+      path: rawPath,
     },
   };
 }
@@ -154,15 +154,37 @@ function countWildcards(value: string): number {
 }
 
 /**
- * Split on the wildcard first, then escape each literal run, so `/watch?v=abc`
- * matches literally instead of `?` making the `h` optional.
+ * Whether `text` matches `glob`, where `*` is any run of characters and
+ * everything else is literal.
+ *
+ * Deliberately not a regular expression: as `.*` chains, a pattern with a few
+ * `*`s took minutes against an ordinary URL, and pins are checked on every
+ * page change. This walks both strings once, stepping back only to the latest
+ * `*`, so the worst case is the product of their lengths.
  */
-function compilePath(rawPath: string): RegExp {
-  const escaped = rawPath
-    .split('*')
-    .map((segment) => segment.replace(/[.+?^${}()|[\]\\]/g, '\\$&'))
-    .join('.*');
-  return new RegExp(`^${escaped}$`);
+function matchesGlob(glob: string, text: string): boolean {
+  let g = 0;
+  let t = 0;
+  let star = -1;
+  let resume = 0;
+  while (t < text.length) {
+    if (glob[g] === '*') {
+      star = g;
+      g += 1;
+      resume = t;
+    } else if (g < glob.length && glob[g] === text[t]) {
+      g += 1;
+      t += 1;
+    } else if (star !== -1) {
+      g = star + 1;
+      resume += 1;
+      t = resume;
+    } else {
+      return false;
+    }
+  }
+  while (glob[g] === '*') g += 1;
+  return g === glob.length;
 }
 
 /** The stored form of a valid pattern, or `null`. */
@@ -218,7 +240,7 @@ export function matchesPattern(pattern: MatchPattern, url: string): boolean {
 
   // `search` carries its own `?`, so this is the URL after the host with the
   // fragment dropped.
-  return pattern.path.test(`${parsed.pathname}${parsed.search}`);
+  return matchesGlob(pattern.path, `${parsed.pathname}${parsed.search}`);
 }
 
 /**

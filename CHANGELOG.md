@@ -24,6 +24,19 @@ All notable changes to Noutieren. Dates are the build date; versions follow
 - A reminder is no longer cleared when it is shown. Notes carry `reminderShownAt` alongside
   `remindAt`; both are cleared when the reminder is seen. No schema change.
 
+### Security
+
+- **Updated Tiptap to 3.32.0 and prosemirror-view to 1.42.6**, past an XSS in ProseMirror's paste
+  handling ([GHSA-c8x8-7fp4-3x9w](https://github.com/advisories/GHSA-c8x8-7fp4-3x9w)), a
+  `__proto__` attribute injection in Tiptap
+  ([GHSA-cp6q-959q-f8rh](https://github.com/advisories/GHSA-cp6q-959q-f8rh)) and a Markdown ReDoS
+  ([GHSA-j95f-988m-3j2f](https://github.com/advisories/GHSA-j95f-988m-3j2f)). The extension
+  page's CSP already blocked inline script, so the XSS had no way to run, but the fix is the fix.
+- **URL pins no longer compile to a regular expression.** Each `*` became `.*`, and a pattern
+  with several of them, typed or imported from a backup, could take minutes to test against an
+  ordinary address, freezing the sidebar or popup on every page change. A plain wildcard
+  matcher replaces it; patterns match exactly as before.
+
 ### Fixed
 
 - The app's layout was a grid with one row per child, so any line shown above the tab strip,
