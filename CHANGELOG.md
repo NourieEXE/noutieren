@@ -207,7 +207,7 @@ any documentation. **Since approved and published** as
 
 - **Renamed** from _ColorNote Tabs_ to _Noutieren_. The extension ID and IndexedDB database
   name deliberately keep their original spelling: they are storage identities, and changing
-  them would orphan every existing note. See _Renaming and identifiers_ in the README.
+  them would orphan every existing note. See _Two names you must never change_ in DEVELOPING.md.
 - **No runtime stylesheet injection.** The editor is created with `injectCSS: false` and
   ProseMirror's base rules ship as static CSS, so the extension never writes markup into the
   document while running.

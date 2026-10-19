@@ -209,7 +209,7 @@ answer: **Allow notifications** opens the full page with `?grant=reminders`, whi
 
 ## Pin to URL
 
-Works the same as on Firefox, see the [main README](../README.md#pin-to-url) for
+Works the same as on Firefox, see [DEVELOPING.md](../DEVELOPING.md#pin-patterns-in-detail) for
 the pattern syntax, with one difference forced by the popup.
 
 Chrome destroys the toolbar popup the moment it loses focus. Opening a permission
