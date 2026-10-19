@@ -352,7 +352,7 @@ describe('the toolbar badge', () => {
 });
 
 describe('showing a reminder', () => {
-  it('shows the note title and text, and keeps the reminder until it is seen', async () => {
+  it('shows the note title but never its text, and keeps the reminder until it is seen', async () => {
     const tab = await createTab({ title: 'Life' });
     const note = await createNote({
       tabId: tab.id,
@@ -371,7 +371,7 @@ describe('showing a reminder', () => {
       type: 'basic',
       iconUrl: 'ext://noutieren/icons/icon-128.png',
       title: 'Call the dentist',
-      message: 'Ask about Friday',
+      message: 'Reminder',
     });
     expect(await getNote(note.id)).toMatchObject({ remindAt: now, reminderShownAt: now });
   });

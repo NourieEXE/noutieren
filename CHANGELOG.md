@@ -36,6 +36,8 @@ All notable changes to Noutieren. Dates are the build date; versions follow
   with several of them, typed or imported from a backup, could take minutes to test against an
   ordinary address, freezing the sidebar or popup on every page change. A plain wildcard
   matcher replaces it; patterns match exactly as before.
+- **Reminder notifications no longer include the note's text**, only its title. Notifications
+  show on lock screens, stay in the system's notification history, and appear in screen shares.
 
 ### Fixed
 

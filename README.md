@@ -133,8 +133,9 @@ place.
 **Note actions → Remind me…** sets a time: in an hour, this evening, tomorrow morning, next week,
 or any date and time. The note then shows a bell in the list and the time in its footer.
 
-When it is due, the browser shows a notification with the note's title and the start of its
-text, even with Noutieren closed. Clicking it opens the note in a full-page tab, since a
+When it is due, the browser shows a notification with the note's title, even with Noutieren
+closed. Never its text: notifications can show on the lock screen and stay in the system's
+notification history. Clicking it opens the note in a full-page tab, since a
 notification cannot open the sidebar. A reminder that came due while the browser was closed
 shows the next time it starts.
 

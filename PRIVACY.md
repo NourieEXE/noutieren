@@ -85,14 +85,16 @@ The URL patterns you type are stored with your tabs and notes, and are included 
 ## Reminders, and the `notifications` permission
 
 Added in 1.4.0. A reminder is a time stored on a note. When it is due, Noutieren shows a
-notification with the note's title and the start of its text.
+notification with the note's title. From 1.5.0 it no longer includes any of the
+note's text, because notifications can show on a lock screen.
 
 `notifications` is **optional**. It is asked for the first time you set a reminder, from the
 full-page view on Chrome for the same reason as `tabs`. Declining keeps your reminders; they
 show once you allow it. You can withdraw it in the same places as `tabs`.
 
 The notification is shown by your browser, and depending on your system by the operating
-system's notification centre, which may keep a history of them. Noutieren sends nothing
+system's notification centre, which may keep a history of them. That history holds the note's
+title, so give a note a neutral title if even that is private. Noutieren sends nothing
 anywhere.
 
 ## Backups you create

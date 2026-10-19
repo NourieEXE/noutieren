@@ -1,5 +1,4 @@
 import { markReminderShown } from '../database/notesRepository';
-import { previewText } from '../editor/document';
 import { logError } from '../services/errors';
 import { loadPreferences } from '../services/preferences';
 import {
@@ -34,7 +33,6 @@ export async function showReminder(
   if (note?.remindAt === undefined) return false;
 
   const name = reminderName(note.id);
-  const preview = previewText(note.plainText, 120);
   const late = now - note.remindAt > LATE_MS;
   // Cleared first, so a repeat alerts again instead of quietly replacing it.
   await api.notifications.clear(name);
@@ -42,9 +40,9 @@ export async function showReminder(
     type: 'basic',
     iconUrl: api.runtime.getURL('icons/icon-128.png'),
     title: note.title,
-    message: late
-      ? `Due ${formatReminderTime(note.remindAt, now)}.${preview ? ` ${preview}` : ''}`
-      : preview || 'Reminder',
+    // Never the note's text: notifications show on the lock screen, stay in the
+    // system's notification history, and appear in screen shares.
+    message: late ? `Due ${formatReminderTime(note.remindAt, now)}.` : 'Reminder',
   });
   return true;
 }
